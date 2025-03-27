@@ -12,14 +12,3 @@ A dummy orderbook architecture, that is, a couple of queues of pending transacti
     - write finance behaviour (specs)
     - extend to option chain?
 
-
-## Domain name:
-### tld
-.day
-.io
-
-### name
-dumbtrade/r
-boosttrade/r
-daytrade/r
-swingtrade/r
