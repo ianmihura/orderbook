@@ -21,6 +21,10 @@ type BaseError struct {
 	data    any
 }
 
+type Pair struct {
+	a, b any
+}
+
 func Assert(t *testing.T, ok bool, message ...any) {
 	if !ok {
 		t.Error(message...)

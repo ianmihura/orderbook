@@ -169,3 +169,50 @@ func TestAddMarket(t *testing.T) {
 	Assert(t, ob.queue_ask[0].size == 2, "Should leave first order size partially filled", ob.queue_ask[0].size)
 	Assert(t, ob.queue_ask[0].filledPct == 0.6, "Should leave first order 'filled' partially filled", ob.queue_ask[0].filledPct)
 }
+
+// With 1m Orders, takes about 100s to execute
+func xTestStress(t *testing.T) {
+	ob := OrderBook{}
+	for range 1_000_000 {
+		var oSide OrderSide
+		if rand.Float32() > 0.5 {
+			oSide = BID
+		} else {
+			oSide = ASK
+		}
+
+		ob.Add(&Order{
+			id:    rand.Uint64(),
+			otype: LIMIT,
+			side:  oSide,
+			size:  rand.Int32() / 10000,
+			price: rand.Float32(),
+			// created: time.Now().Add(time.Duration(rand.Uint64())),
+		})
+	}
+	Assert(t, true, "")
+}
+
+func TestDisplay(t *testing.T) {
+	ob := OrderBook{}
+	for range 100 {
+		var oSide OrderSide
+		if rand.Float32() > 0.5 {
+			oSide = BID
+		} else {
+			oSide = ASK
+		}
+
+		// TODO try some random func thats not so smooth
+		ob.Add(&Order{
+			id:    rand.Uint64(),
+			otype: LIMIT,
+			side:  oSide,
+			size:  rand.Int32() / 10000000,
+			price: rand.Float32(),
+			// created: time.Now().Add(time.Duration(rand.Uint64())),
+		})
+	}
+	ob.PPrint()
+	Assert(t, true, "")
+}

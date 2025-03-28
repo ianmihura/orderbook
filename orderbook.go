@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"slices"
 	"sort"
 )
@@ -15,6 +16,9 @@ import (
 1: 48
 2: 47
 ...
+
+TODO consider switching queue indexing for better perf
+TODO (test that the hypotesis above)
 */
 
 type OrderBook struct {
@@ -30,9 +34,6 @@ type FillReport struct {
 
 // TODO do we need a struct for Queue?
 
-// func Display
-// func Clear // should remove zeroed elements
-
 func (orderBook *OrderBook) Add(order *Order) FillReport {
 	if order.otype == MARKET {
 		return orderBook.addMarket(order)
@@ -44,14 +45,14 @@ func (orderBook *OrderBook) Add(order *Order) FillReport {
 }
 
 func (orderBook *OrderBook) addMarket(order *Order) FillReport {
-	queue := *orderBook.GetQueueFlip(order.side)
 	initialOrderSize := order.size
 	pendingSize := order.size
 	var totalSpent f32
 	var filled i32
 
-	fillingOrder := &queue[0]
-	for pendingSize > 0 && len(queue) > 0 && limitPrice(order, fillingOrder.price) {
+	fillingOrder := &(*orderBook.GetQueueFlip(order.side))[0]
+	for pendingSize > 0 && len(*orderBook.GetQueueFlip(order.side)) > 0 && limitPrice(order, fillingOrder.price) {
+		// fmt.Println(len(queue))
 		// fmt.Println(fillingOrder)
 		if pendingSize >= fillingOrder.size {
 			filled, _ = fillingOrder.Fill(fillingOrder.size)
@@ -80,8 +81,6 @@ func limitPrice(o *Order, price f32) bool {
 	} else if o.side == ASK {
 		return o.price <= price
 	} else if o.side == BID {
-		// fmt.Println()
-		// fmt.Println("---------------------")
 		return o.price >= price
 	} else {
 		panic("Unknown OrderSide")
@@ -189,4 +188,51 @@ func (orderBook *OrderBook) Midprice() f32 {
 	} else {
 		return 0
 	}
+}
+
+func (orderBook *OrderBook) Print() {
+	fmt.Println()
+	fmt.Println("OrderBook")
+	fmt.Println()
+
+	for i := len(orderBook.queue_ask) - 1; i >= 0; i-- {
+		orderBook.queue_ask[i].Print()
+	}
+	fmt.Println()
+	for i := range len(orderBook.queue_bid) {
+		orderBook.queue_bid[i].Print()
+	}
+}
+
+func (orderBook *OrderBook) PPrint() {
+	// TODO max value dynamically
+	var quantity i32
+	var depth string
+	var askPrint []Pair
+
+	fmt.Println()
+	fmt.Println("ASK")
+	for i := range len(orderBook.queue_ask) {
+		quantity += orderBook.queue_ask[i].size
+		for range quantity/1000 + 1 {
+			depth += "█"
+		}
+		askPrint = append(askPrint, Pair{orderBook.queue_ask[i].price, depth})
+	}
+	for i := len(askPrint) - 1; i >= 0; i-- {
+		fmt.Printf("$%f %s\n", askPrint[i].a, askPrint[i].b)
+	}
+
+	fmt.Println()
+	depth = ""
+	quantity = 0
+	for i := range len(orderBook.queue_bid) {
+		quantity += orderBook.queue_bid[i].size
+		for range quantity/1000 + 1 {
+			depth += "█"
+		}
+		fmt.Printf("$%f %s\n", orderBook.queue_bid[i].price, depth)
+	}
+	fmt.Println("BID")
+	fmt.Println()
 }
