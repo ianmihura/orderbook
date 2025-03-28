@@ -22,13 +22,38 @@ type Order struct {
 	filled_pct f32
 }
 
-func (order *Order) Fill(size i32) (i32, error) {
-	// would execute the ownership transfer
-	if size > order.size {
-		return 0, &BaseError{message: "Filling size exceeds order size"}
-	} else {
-		order.filled_pct = f32(size) / f32(order.size)
-		order.size = order.size - size
-		return size, nil
+/*
+OB -> calls Fill on Order
+	-> calls Fill ok Portfolio
+		-> validates if can execute and modifies portfolio
+		<- returns ok / nok
+	if ok -> save to TransactionHistory
+	<- returns ok / nok to OB
+*/
+
+func (passive_order *Order) Fill(active_order *Order) *FillReport {
+	// TODO validate with Portfolio
+	// TODO if valid, add to TransactionHistory
+
+	fill_report := FillReport{
+		price: passive_order.price,
 	}
+
+	if active_order.size >= passive_order.size {
+		// Filling active_order partially
+		active_order.filled_pct = f32(passive_order.size) / f32(active_order.size)
+		active_order.size -= passive_order.size
+
+		fill_report.size = passive_order.size
+		fill_report.filled_pct = 1
+	} else {
+		// Filling passive_order partially
+		passive_order.filled_pct = f32(active_order.size) / f32(passive_order.size)
+		passive_order.size -= active_order.size
+
+		fill_report.size = active_order.size
+		fill_report.filled_pct = passive_order.filled_pct
+	}
+
+	return &fill_report
 }

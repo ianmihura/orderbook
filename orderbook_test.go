@@ -107,7 +107,7 @@ func TestAddAutofillLimit(t *testing.T) {
 	Assert(t, fill.size == 5, "Should fill all the order", fill.size)
 	Assert(t, fill.price == 52, "Should fill the order at correct price", fill.price)
 	Assert(t, fill.filled_pct == 5.0/6.0, "Should fill all filled_pct", fill.filled_pct)
-	Assert(t, ob.queue_bid[0].size == 1, "We should see the rest of the order in the queue")
+	Assert(t, ob.queue_bid[0].size == 1, "We should see the rest of the order in the queue", ob.queue_bid[0].size)
 	Assert(t, ob.queue_bid[0].filled_pct == 5.0/6.0, "We should see the rest of the order in the queue", ob.queue_ask[0].filled_pct)
 }
 
