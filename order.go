@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -31,4 +32,14 @@ func (order *Order) Fill(size i32) (i32, error) {
 		order.size = order.size - size
 		return size, nil
 	}
+}
+
+func (order Order) Print() {
+	var side string
+	if order.side == BID {
+		side = "BID"
+	} else {
+		side = "ASK"
+	}
+	fmt.Printf("%s : $%f (q:%d)\n", side, order.price, order.size)
 }
