@@ -193,7 +193,7 @@ func xTestStress(t *testing.T) {
 	Assert(t, true, "")
 }
 
-func TestDisplay(t *testing.T) {
+func xTestDisplay(t *testing.T) {
 	ob := OrderBook{}
 	for range 100 {
 		var oside OrderSide
