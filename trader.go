@@ -16,13 +16,17 @@ type i16 = int16
 type i32 = int32
 type i64 = int64
 
+type Pair struct {
+	a, b any
+}
+
 type BaseError struct {
 	message string
 	data    any
 }
 
-type Pair struct {
-	a, b any
+func (e *BaseError) Error() string {
+	return fmt.Sprintf(e.message, e.data)
 }
 
 func Assert(t *testing.T, ok bool, message ...any) {
@@ -38,10 +42,6 @@ func IsSortedFuncDesc[S ~[]E, E any](x S, cmp func(a, b E) int) bool {
 		}
 	}
 	return true
-}
-
-func (e *BaseError) Error() string {
-	return fmt.Sprintf(e.message, e.data)
 }
 
 func main() {

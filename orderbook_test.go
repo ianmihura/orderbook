@@ -44,18 +44,18 @@ func TestRemove(t *testing.T) {
 func TestAddLimit(t *testing.T) {
 	ob := OrderBook{}
 	for range 100 {
-		var oSide OrderSide
+		var oside OrderSide
 		if rand.Float32() > 0.5 {
-			oSide = BID
+			oside = BID
 		} else {
-			oSide = ASK
+			oside = ASK
 		}
 
 		o := Order{
 			id:      rand.Uint64(),
 			otype:   LIMIT,
-			side:    oSide,
-			price:   rand.Float32() + float32(oSide), // ensures we dont autofill limit orders
+			side:    oside,
+			price:   rand.Float32() + float32(oside), // ensures we dont autofill limit orders
 			created: time.Now().Add(time.Duration(rand.Uint64())),
 		}
 		ob.Add(&o)
@@ -106,9 +106,9 @@ func TestAddAutofillLimit(t *testing.T) {
 	})
 	Assert(t, fill.size == 5, "Should fill all the order", fill.size)
 	Assert(t, fill.price == 52, "Should fill the order at correct price", fill.price)
-	Assert(t, fill.filledPct == 5.0/6.0, "Should fill all filledPct", fill.filledPct)
+	Assert(t, fill.filled_pct == 5.0/6.0, "Should fill all filled_pct", fill.filled_pct)
 	Assert(t, ob.queue_bid[0].size == 1, "We should see the rest of the order in the queue")
-	Assert(t, ob.queue_bid[0].filledPct == 5.0/6.0, "We should see the rest of the order in the queue", ob.queue_ask[0].filledPct)
+	Assert(t, ob.queue_bid[0].filled_pct == 5.0/6.0, "We should see the rest of the order in the queue", ob.queue_ask[0].filled_pct)
 }
 
 func TestAddMarket(t *testing.T) {
@@ -139,7 +139,7 @@ func TestAddMarket(t *testing.T) {
 	})
 	Assert(t, fill.size == 20, "Should fill all the order")
 	Assert(t, fill.price == 48.5, "Should fill the order at correct price", fill.price)
-	Assert(t, fill.filledPct == 1, "Should fill all filledPct", fill.filledPct)
+	Assert(t, fill.filled_pct == 1, "Should fill all filled_pct", fill.filled_pct)
 	Assert(t, len(ob.queue_bid) == 46, "Should take 4 orders off the BID queue")
 	Assert(t, len(ob.queue_ask) == 50, "Should leave the ASK queue intact")
 
@@ -152,7 +152,7 @@ func TestAddMarket(t *testing.T) {
 	})
 	Assert(t, fill.size == 30, "Should fill all the order")
 	Assert(t, fill.price == 54.5, "Should fill the order at correct price", fill.price)
-	Assert(t, fill.filledPct == 1, "Should fill all filledPct", fill.filledPct)
+	Assert(t, fill.filled_pct == 1, "Should fill all filled_pct", fill.filled_pct)
 	Assert(t, len(ob.queue_bid) == 46, "Should leave the BID queue intact")
 	Assert(t, len(ob.queue_ask) == 44, "Should take 6 orders off the BID queue")
 
@@ -165,26 +165,26 @@ func TestAddMarket(t *testing.T) {
 	})
 	Assert(t, fill.size == 8, "Should fill all the order", fill.size)
 	Assert(t, fill.price == 58.375, "Should fill the order at correct price", fill.price)
-	Assert(t, fill.filledPct == 1, "Should fill all filledPct", fill.filledPct)
+	Assert(t, fill.filled_pct == 1, "Should fill all filled_pct", fill.filled_pct)
 	Assert(t, ob.queue_ask[0].size == 2, "Should leave first order size partially filled", ob.queue_ask[0].size)
-	Assert(t, ob.queue_ask[0].filledPct == 0.6, "Should leave first order 'filled' partially filled", ob.queue_ask[0].filledPct)
+	Assert(t, ob.queue_ask[0].filled_pct == 0.6, "Should leave first order 'filled' partially filled", ob.queue_ask[0].filled_pct)
 }
 
 // With 1m Orders, takes about 100s to execute
 func xTestStress(t *testing.T) {
 	ob := OrderBook{}
 	for range 1_000_000 {
-		var oSide OrderSide
+		var oside OrderSide
 		if rand.Float32() > 0.5 {
-			oSide = BID
+			oside = BID
 		} else {
-			oSide = ASK
+			oside = ASK
 		}
 
 		ob.Add(&Order{
 			id:    rand.Uint64(),
 			otype: LIMIT,
-			side:  oSide,
+			side:  oside,
 			size:  rand.Int32() / 10000,
 			price: rand.Float32(),
 			// created: time.Now().Add(time.Duration(rand.Uint64())),
@@ -196,18 +196,18 @@ func xTestStress(t *testing.T) {
 func TestDisplay(t *testing.T) {
 	ob := OrderBook{}
 	for range 100 {
-		var oSide OrderSide
+		var oside OrderSide
 		if rand.Float32() > 0.5 {
-			oSide = BID
+			oside = BID
 		} else {
-			oSide = ASK
+			oside = ASK
 		}
 
 		// TODO try some random func thats not so smooth
 		ob.Add(&Order{
 			id:    rand.Uint64(),
 			otype: LIMIT,
-			side:  oSide,
+			side:  oside,
 			size:  rand.Int32() / 10000000,
 			price: rand.Float32(),
 			// created: time.Now().Add(time.Duration(rand.Uint64())),

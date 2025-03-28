@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"slices"
 	"sort"
 )
@@ -27,51 +26,51 @@ type OrderBook struct {
 }
 
 type FillReport struct {
-	price     f32
-	size      i32
-	filledPct f32
+	price      f32
+	size       i32
+	filled_pct f32
 }
 
 // TODO do we need a struct for Queue?
 
-func (orderBook *OrderBook) Add(order *Order) FillReport {
+func (order_book *OrderBook) Add(order *Order) FillReport {
 	if order.otype == MARKET {
-		return orderBook.addMarket(order)
+		return order_book.addMarket(order)
 	} else if order.otype == LIMIT {
-		return orderBook.addLimit(order)
+		return order_book.addLimit(order)
 	} else {
 		panic("Unknown OrderType")
 	}
 }
 
-func (orderBook *OrderBook) addMarket(order *Order) FillReport {
-	initialOrderSize := order.size
-	pendingSize := order.size
-	var totalSpent f32
+func (order_book *OrderBook) addMarket(order *Order) FillReport {
+	init_order_size := order.size
+	pending_size := order.size
+	var total_spent f32
 	var filled i32
 
-	fillingOrder := &(*orderBook.GetQueueFlip(order.side))[0]
-	for pendingSize > 0 && len(*orderBook.GetQueueFlip(order.side)) > 0 && limitPrice(order, fillingOrder.price) {
+	filling_order := &(*order_book.GetQueueFlip(order.side))[0]
+	for pending_size > 0 && len(*order_book.GetQueueFlip(order.side)) > 0 && limitPrice(order, filling_order.price) {
 		// fmt.Println(len(queue))
-		// fmt.Println(fillingOrder)
-		if pendingSize >= fillingOrder.size {
-			filled, _ = fillingOrder.Fill(fillingOrder.size)
-			totalSpent += fillingOrder.price * f32(filled)
-			// fmt.Println(fillingOrder)
-			orderBook.remove(fillingOrder.side, 0)
+		// fmt.Println(filling_order)
+		if pending_size >= filling_order.size {
+			filled, _ = filling_order.Fill(filling_order.size)
+			total_spent += filling_order.price * f32(filled)
+			// fmt.Println(filling_order)
+			order_book.remove(filling_order.side, 0)
 		} else {
-			filled, _ = fillingOrder.Fill(pendingSize)
-			totalSpent += fillingOrder.price * f32(filled)
-			// fmt.Println(fillingOrder)
+			filled, _ = filling_order.Fill(pending_size)
+			total_spent += filling_order.price * f32(filled)
+			// fmt.Println(filling_order)
 		}
-		pendingSize = pendingSize - filled
+		pending_size = pending_size - filled
 	}
-	filledSize := initialOrderSize - pendingSize
+	filled_size := init_order_size - pending_size
 
 	return FillReport{
-		price:     f32(totalSpent) / f32(filledSize),
-		size:      filledSize,
-		filledPct: f32(filledSize) / f32(order.size),
+		price:      f32(total_spent) / f32(filled_size),
+		size:       filled_size,
+		filled_pct: f32(filled_size) / f32(order.size),
 	}
 }
 
@@ -87,14 +86,14 @@ func limitPrice(o *Order, price f32) bool {
 	}
 }
 
-func (orderBook *OrderBook) addLimit(order *Order) FillReport {
-	queue := *orderBook.GetQueue(order.side)
-	fillReport := FillReport{}
+func (order_book *OrderBook) addLimit(order *Order) FillReport {
+	queue := *order_book.GetQueue(order.side)
+	fill_report := FillReport{}
 
-	if shouldFillLimitOrder(order, orderBook) {
-		fillReport = orderBook.addMarket(order)
-		order.size -= fillReport.size
-		order.filledPct = fillReport.filledPct
+	if shouldFillLimitOrder(order, order_book) {
+		fill_report = order_book.addMarket(order)
+		order.size -= fill_report.size
+		order.filled_pct = fill_report.filled_pct
 	}
 
 	if order.side == ASK {
@@ -102,21 +101,21 @@ func (orderBook *OrderBook) addLimit(order *Order) FillReport {
 		index := sort.Search(len(queue), func(i int) bool {
 			return queue[i].price > order.price
 		})
-		orderBook.queue_ask = slices.Insert(queue, index, *order)
+		order_book.queue_ask = slices.Insert(queue, index, *order)
 	} else if order.side == BID {
 		index := sort.Search(len(queue), func(i int) bool {
 			return queue[i].price < order.price
 		})
-		orderBook.queue_bid = slices.Insert(queue, index, *order)
+		order_book.queue_bid = slices.Insert(queue, index, *order)
 	} else {
 		panic("Unknown OrderSide")
 	}
 
-	return fillReport
+	return fill_report
 }
 
-func shouldFillLimitOrder(order *Order, orderBook *OrderBook) bool {
-	queue := *orderBook.GetQueueFlip(order.side)
+func shouldFillLimitOrder(order *Order, order_book *OrderBook) bool {
+	queue := *order_book.GetQueueFlip(order.side)
 	if len(queue) == 0 {
 		return false
 	} else if order.side == ASK && order.price <= queue[0].price {
@@ -128,32 +127,32 @@ func shouldFillLimitOrder(order *Order, orderBook *OrderBook) bool {
 	}
 }
 
-func (orderBook *OrderBook) Remove(order *Order) (*Order, error) {
-	queue := *orderBook.GetQueue(order.side)
-	ordersIndex := []int{}
+func (order_book *OrderBook) Remove(order *Order) (*Order, error) {
+	queue := *order_book.GetQueue(order.side)
+	order_idxs := []int{}
 	// TODO can make faster with bisect search (queue is sorted by price)
 	for i := range queue {
 		if queue[i].id == order.id {
-			ordersIndex = append(ordersIndex, i)
+			order_idxs = append(order_idxs, i)
 		}
 	}
 
-	if len(ordersIndex) == 1 {
-		o := orderBook.remove(order.side, ordersIndex[0])
+	if len(order_idxs) == 1 {
+		o := order_book.remove(order.side, order_idxs[0])
 		return &o, nil
 	} else {
-		return nil, &BaseError{"Found orders matching your index:", len(ordersIndex)}
+		return nil, &BaseError{"Found orders matching your index:", len(order_idxs)}
 	}
 }
 
-func (orderBook *OrderBook) remove(side OrderSide, i int) Order {
+func (order_book *OrderBook) remove(side OrderSide, i int) Order {
 	var order Order
 	if side == ASK {
-		order = orderBook.queue_ask[i]
-		orderBook.queue_ask = slices.Delete(orderBook.queue_ask, i, i+1)
+		order = order_book.queue_ask[i]
+		order_book.queue_ask = slices.Delete(order_book.queue_ask, i, i+1)
 	} else if side == BID {
-		order = orderBook.queue_bid[i]
-		orderBook.queue_bid = slices.Delete(orderBook.queue_bid, i, i+1)
+		order = order_book.queue_bid[i]
+		order_book.queue_bid = slices.Delete(order_book.queue_bid, i, i+1)
 	} else {
 		panic("Unknown OrderSide")
 	}
@@ -161,78 +160,31 @@ func (orderBook *OrderBook) remove(side OrderSide, i int) Order {
 	return order
 }
 
-func (orderBook *OrderBook) GetQueue(side OrderSide) *[]Order {
+func (order_book *OrderBook) GetQueue(side OrderSide) *[]Order {
 	if side == BID {
-		return &orderBook.queue_bid
+		return &order_book.queue_bid
 	} else if side == ASK {
-		return &orderBook.queue_ask
+		return &order_book.queue_ask
 	} else {
 		panic("Unknown OrderSide")
 	}
 }
 
-func (orderBook *OrderBook) GetQueueFlip(side OrderSide) *[]Order {
+func (order_book *OrderBook) GetQueueFlip(side OrderSide) *[]Order {
 	if side == BID {
-		return &orderBook.queue_ask
+		return &order_book.queue_ask
 	} else if side == ASK {
-		return &orderBook.queue_bid
+		return &order_book.queue_bid
 	} else {
 		panic("Unknown OrderSide")
 	}
 }
 
-func (orderBook *OrderBook) Midprice() f32 {
+func (order_book *OrderBook) Midprice() f32 {
 	// TODO test
-	if len(orderBook.queue_ask) > 0 && len(orderBook.queue_bid) > 0 {
-		return (orderBook.queue_ask[0].price + orderBook.queue_bid[0].price) / 2
+	if len(order_book.queue_ask) > 0 && len(order_book.queue_bid) > 0 {
+		return (order_book.queue_ask[0].price + order_book.queue_bid[0].price) / 2
 	} else {
 		return 0
 	}
-}
-
-func (orderBook *OrderBook) Print() {
-	fmt.Println()
-	fmt.Println("OrderBook")
-	fmt.Println()
-
-	for i := len(orderBook.queue_ask) - 1; i >= 0; i-- {
-		orderBook.queue_ask[i].Print()
-	}
-	fmt.Println()
-	for i := range len(orderBook.queue_bid) {
-		orderBook.queue_bid[i].Print()
-	}
-}
-
-func (orderBook *OrderBook) PPrint() {
-	// TODO max value dynamically
-	var quantity i32
-	var depth string
-	var askPrint []Pair
-
-	fmt.Println()
-	fmt.Println("ASK")
-	for i := range len(orderBook.queue_ask) {
-		quantity += orderBook.queue_ask[i].size
-		for range quantity/1000 + 1 {
-			depth += "█"
-		}
-		askPrint = append(askPrint, Pair{orderBook.queue_ask[i].price, depth})
-	}
-	for i := len(askPrint) - 1; i >= 0; i-- {
-		fmt.Printf("$%f %s\n", askPrint[i].a, askPrint[i].b)
-	}
-
-	fmt.Println()
-	depth = ""
-	quantity = 0
-	for i := range len(orderBook.queue_bid) {
-		quantity += orderBook.queue_bid[i].size
-		for range quantity/1000 + 1 {
-			depth += "█"
-		}
-		fmt.Printf("$%f %s\n", orderBook.queue_bid[i].price, depth)
-	}
-	fmt.Println("BID")
-	fmt.Println()
 }

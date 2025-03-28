@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -14,13 +13,13 @@ const LIMIT OrderType = 0
 const MARKET OrderType = 1
 
 type Order struct {
-	id        u64
-	otype     OrderType
-	side      OrderSide
-	size      i32
-	price     f32
-	created   time.Time
-	filledPct f32
+	id         u64
+	otype      OrderType
+	side       OrderSide
+	size       i32
+	price      f32
+	created    time.Time
+	filled_pct f32
 }
 
 func (order *Order) Fill(size i32) (i32, error) {
@@ -28,18 +27,8 @@ func (order *Order) Fill(size i32) (i32, error) {
 	if size > order.size {
 		return 0, &BaseError{message: "Filling size exceeds order size"}
 	} else {
-		order.filledPct = f32(size) / f32(order.size)
+		order.filled_pct = f32(size) / f32(order.size)
 		order.size = order.size - size
 		return size, nil
 	}
-}
-
-func (order Order) Print() {
-	var side string
-	if order.side == BID {
-		side = "BID"
-	} else {
-		side = "ASK"
-	}
-	fmt.Printf("%s : $%f (q:%d)\n", side, order.price, order.size)
 }
