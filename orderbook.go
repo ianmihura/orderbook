@@ -49,23 +49,26 @@ func (order_book *OrderBook) Add(order *Order) FillReport {
 
 // Fills an Order with existing market orders.
 // If it's a LIMIT order, will fill until the limit price.
-// If the Order is bigger than the queue, or otherwise does not
-// complete it's intended size, too bad. Order object is left unchanged.
+// If the Order size is bigger than the queue or its limit price is reached,
+// we'll exit without completing the intended order size.
 // Filled information is available in the returning FillReport.
 //
+// Side effects: Edits the active_order size and filled_pct,
+// removes filled orders from the order_book, edits partial fill orders.
+//
 // Returns a FillReport.
-func addMarket(order_book *OrderBook, order *Order) FillReport {
-	init_order_size := order.size
-	pending_size := order.size
+func addMarket(order_book *OrderBook, active_order *Order) FillReport {
+	init_order_size := active_order.size // the order size will change as it gets filled
+	pending_size := active_order.size
 	var total_spent f32
 	var fill_report_tmp FillReport
 
-	passive_order := &(*order_book.GetQueueFlip(order.side))[0]
+	passive_order := &(*order_book.GetQueueFlip(active_order.side))[0]
 	for pending_size > 0 &&
-		len(*order_book.GetQueueFlip(order.side)) > 0 &&
-		limitPrice(order, passive_order.price) {
+		len(*order_book.GetQueueFlip(active_order.side)) > 0 &&
+		limitPrice(active_order, passive_order.price) {
 
-		fill_report_tmp = *passive_order.Fill(order)
+		fill_report_tmp = *passive_order.Fill(active_order)
 
 		if fill_report_tmp.filled_pct == 1 {
 			order_book.RawRemove(passive_order.side, 0)
@@ -107,8 +110,6 @@ func addLimit(order_book *OrderBook, order *Order) FillReport {
 
 	if shouldFillLimitOrder(order_book, order) {
 		fill_report = addMarket(order_book, order)
-		order.size -= fill_report.size
-		order.filled_pct = fill_report.filled_pct
 	}
 
 	if order.side == ASK {
