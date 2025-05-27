@@ -21,8 +21,9 @@ TODO (test that the hypotesis above)
 */
 
 type OrderBook struct {
-	queue_ask []Order
-	queue_bid []Order
+	queue_ask           []Order
+	queue_bid           []Order
+	transaction_history *TransactionHistory
 }
 
 type FillReport struct {
@@ -101,7 +102,7 @@ func limitPrice(order *Order, price f32) bool {
 
 // Will check if we should fill the limit Order, and
 // will fill the Order up to the specified limit price.
-// Then will _
+// Then will add the remaining order to the queue.
 //
 // Returns a FillReport. Will panic if unknown OrderSide.
 func addLimit(order_book *OrderBook, order *Order) FillReport {
@@ -127,6 +128,7 @@ func addLimit(order_book *OrderBook, order *Order) FillReport {
 		panic("Unknown OrderSide")
 	}
 
+	order.order_book = order_book
 	return fill_report
 }
 
@@ -145,6 +147,7 @@ func shouldFillLimitOrder(order_book *OrderBook, order *Order) bool {
 }
 
 // Finds and removes an Order from an OrderBook.
+// Does not fill orders, only removes element from array.
 //
 // Returns removed Order, or error if finds != 1 Orders with same ID.
 func (order_book *OrderBook) Remove(order *Order) (*Order, error) {

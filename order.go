@@ -13,6 +13,7 @@ const LIMIT OrderType = 0
 const MARKET OrderType = 1
 
 type Order struct {
+	portfolio  *Portfolio
 	id         u64
 	otype      OrderType
 	side       OrderSide
@@ -20,6 +21,7 @@ type Order struct {
 	price      f32
 	created    time.Time
 	filled_pct f32
+	order_book *OrderBook
 }
 
 /*
@@ -32,9 +34,26 @@ OB -> calls Fill on Order
 */
 
 func (passive_order *Order) Fill(active_order *Order) *FillReport {
-	// TODO validate with Portfolio
-	// TODO if valid, add to TransactionHistory
+	can_fill_passive_order := passive_order.portfolio.CanFill(active_order)
+	can_fill_active_order := active_order.portfolio.CanFill(passive_order)
 
+	if can_fill_passive_order && can_fill_active_order {
+		// TODO enable rollback (just in case)
+		passive_order.portfolio.Fill(active_order)
+		active_order.portfolio.Fill(passive_order)
+
+		// TODO modify portfolio valies
+
+		passive_order.order_book.transaction_history.Append(
+			passive_order, active_order,
+		)
+		return fill(passive_order, active_order)
+	} else {
+		return &FillReport{}
+	}
+}
+
+func fill(passive_order, active_order *Order) *FillReport {
 	fill_report := FillReport{
 		price: passive_order.price,
 	}

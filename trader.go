@@ -35,6 +35,12 @@ func Assert(t *testing.T, ok bool, message ...any) {
 	}
 }
 
+// func Ok(ok bool, message ...any) {
+// 	if !ok {
+// 		panic(message)
+// 	}
+// }
+
 func IsSortedFuncDesc[S ~[]E, E any](x S, cmp func(a, b E) int) bool {
 	for i := len(x) - 1; i > 0; i-- {
 		if cmp(x[i], x[i-1]) > 0 {
