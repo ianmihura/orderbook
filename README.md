@@ -6,3 +6,5 @@ A dummy orderbook architecture, that is, a couple of queues of pending transacti
 - features
     - (Optimize Execution Algorithms) Implement VWAP, TWAP, POV for trade exec
     - transaction history
+
+- make more time efficient

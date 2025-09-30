@@ -35,7 +35,7 @@ func PrintNewOrderHelp() {
 	fmt.Println("Order format: A|B,LIMIT|MARKET,size,price")
 	fmt.Println("Where: A|B is the side Ask or Bid")
 	fmt.Println("Where: L|M is the type Limit or Market")
-	fmt.Println("		Note that Market orders will ignore price")
+	fmt.Println("  Note that Market orders will ignore price")
 	fmt.Println("Where: Size in an int")
 	fmt.Println("Where: Price is a float")
 	fmt.Println("* Values must be separated by a single comma (, char)")
