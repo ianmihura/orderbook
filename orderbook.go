@@ -79,6 +79,9 @@ func addLimit(order_book *OrderBook, order *Order) FillReport {
 
 	if shouldFillLimitOrder(order_book, order) {
 		fill_report = addToMarket(order_book, order)
+		if fill_report.filled_pct == 1.0 {
+			return fill_report
+		}
 	}
 
 	if order.side == BID {
