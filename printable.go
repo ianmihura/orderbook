@@ -12,12 +12,12 @@ func (order_book *OrderBook) Print() {
 	fmt.Println("OrderBook")
 	fmt.Println()
 
-	for i := len(order_book.queue_ask) - 1; i >= 0; i-- {
-		order_book.queue_ask[i].Print()
+	for i := range order_book.queue_ask.Len() {
+		order_book.queue_ask.v[i].Print()
 	}
 	fmt.Println()
-	for i := range len(order_book.queue_bid) {
-		order_book.queue_bid[i].Print()
+	for i := order_book.queue_bid.Len() - 1; i >= 0; i-- {
+		order_book.queue_bid.v[i].Print()
 	}
 }
 
@@ -29,12 +29,12 @@ func (order_book *OrderBook) PPrint() {
 
 	fmt.Println()
 	fmt.Println("ASK")
-	for i := range len(order_book.queue_ask) {
-		quantity += order_book.queue_ask[i].size
+	for i := order_book.queue_ask.Len() - 1; i >= 0; i-- {
+		quantity += order_book.queue_ask.v[i].size
 		for range quantity/1000 + 1 {
 			depth += "█"
 		}
-		ask_print = append(ask_print, Pair{order_book.queue_ask[i].price, depth})
+		ask_print = append(ask_print, Pair{order_book.queue_ask.v[i].price, depth})
 	}
 	for i := len(ask_print) - 1; i >= 0; i-- {
 		fmt.Printf("$%f %s\n", ask_print[i].a, ask_print[i].b)
@@ -43,12 +43,12 @@ func (order_book *OrderBook) PPrint() {
 	fmt.Println()
 	depth = ""
 	quantity = 0
-	for i := range len(order_book.queue_bid) {
-		quantity += order_book.queue_bid[i].size
+	for i := order_book.queue_bid.Len() - 1; i >= 0; i-- {
+		quantity += order_book.queue_bid.v[i].size
 		for range quantity/1000 + 1 {
 			depth += "█"
 		}
-		fmt.Printf("$%f %s\n", order_book.queue_bid[i].price, depth)
+		fmt.Printf("$%f %s\n", order_book.queue_bid.v[i].price, depth)
 	}
 	fmt.Println("BID")
 	fmt.Println()
@@ -66,4 +66,12 @@ func (order Order) Print() {
 
 func (order Order) PPrint() {
 	order.Print()
+}
+
+func (fill FillReport) Print() {
+	fmt.Printf("Filled %.2f%% at price $%.2f (q:%d)\n", fill.filled_pct, fill.price, fill.size)
+}
+
+func (fill FillReport) PPrint() {
+	fill.Print()
 }

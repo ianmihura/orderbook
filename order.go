@@ -44,9 +44,9 @@ func (passive_order *Order) Fill(active_order *Order) *FillReport {
 
 		// TODO modify portfolio valies
 
-		passive_order.order_book.transaction_history.Append(
-			passive_order, active_order,
-		)
+		// passive_order.order_book.transaction_history.Append(
+		// 	passive_order, active_order,
+		// )
 		return fill(passive_order, active_order)
 	} else {
 		return &FillReport{}
