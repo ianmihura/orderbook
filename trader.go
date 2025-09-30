@@ -2,55 +2,44 @@ package main
 
 import (
 	"fmt"
-	"testing"
+	"math/rand"
+	"time"
 )
 
-type f32 = float32
-type f64 = float64
-type u8 = uint8
-type u16 = uint16
-type u32 = uint32
-type u64 = uint64
-type i8 = int8
-type i16 = int16
-type i32 = int32
-type i64 = int64
-
-type Pair struct {
-	a, b any
-}
-
-type BaseError struct {
-	message string
-	data    any
-}
-
-func (e *BaseError) Error() string {
-	return fmt.Sprintf(e.message, e.data)
-}
-
-func Assert(t *testing.T, ok bool, message ...any) {
-	if !ok {
-		t.Error(message...)
-	}
-}
-
-// func Ok(ok bool, message ...any) {
-// 	if !ok {
-// 		panic(message)
-// 	}
-// }
-
-func IsSortedFuncDesc[S ~[]E, E any](x S, cmp func(a, b E) int) bool {
-	for i := len(x) - 1; i > 0; i-- {
-		if cmp(x[i], x[i-1]) > 0 {
-			return false
-		}
-	}
-	return true
-}
-
 func main() {
+	// var i int
+	// fmt.Scan(&i)
+	// fmt.Println(i)
+
 	ob := OrderBook{}
-	fmt.Println(ob.GetQueue(ASK))
+	for i := range 1000 {
+		var oside OrderSide
+		if rand.Float32() > 0.5 {
+			oside = BID
+		} else {
+			oside = ASK
+		}
+
+		new_order := Order{
+			id:    rand.Uint64(),
+			otype: LIMIT,
+			side:  oside,
+			size:  rand.Int31n(10) + 1,
+			price: f32(Truncate(rand.Float64(), 2)),
+		}
+		// fmt.Print("\033[H\033[2J")
+		if i%10 == 0 {
+			new_order.Print()
+			ob.Add(&new_order)
+			ob.PPrint()
+			fmt.Println("-----------------------")
+		} else {
+			ob.Add(&new_order)
+		}
+		time.Sleep(time.Millisecond * 100)
+	}
+	ob.PPrint()
 }
+
+// TODO boot orderbook
+// TODO simulate active trading with multiple threads
