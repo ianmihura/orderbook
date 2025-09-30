@@ -39,11 +39,12 @@ type FillReport struct {
 //
 // Returns a FillReport. Will panic if unknown OrderType
 func (order_book *OrderBook) Add(order *Order) FillReport {
-	if order.otype == MARKET {
+	switch order.otype {
+	case MARKET:
 		return addMarket(order_book, order)
-	} else if order.otype == LIMIT {
+	case LIMIT:
 		return addLimit(order_book, order)
-	} else {
+	default:
 		panic("Unknown OrderType")
 	}
 }
@@ -113,18 +114,19 @@ func addLimit(order_book *OrderBook, order *Order) FillReport {
 		fill_report = addMarket(order_book, order)
 	}
 
-	if order.side == ASK {
+	switch order.side {
+	case ASK:
 		// TODO sort by datetime as well
 		index := sort.Search(len(queue), func(i int) bool {
 			return queue[i].price > order.price
 		})
 		order_book.queue_ask = slices.Insert(queue, index, *order)
-	} else if order.side == BID {
+	case BID:
 		index := sort.Search(len(queue), func(i int) bool {
 			return queue[i].price < order.price
 		})
 		order_book.queue_bid = slices.Insert(queue, index, *order)
-	} else {
+	default:
 		panic("Unknown OrderSide")
 	}
 
@@ -174,13 +176,14 @@ func (order_book *OrderBook) Remove(order *Order) (*Order, error) {
 // Returns removed Order. Panics if unknown OrderSide.
 func (order_book *OrderBook) RawRemove(side OrderSide, i int) Order {
 	var order Order
-	if side == ASK {
+	switch side {
+	case ASK:
 		order = order_book.queue_ask[i]
 		order_book.queue_ask = slices.Delete(order_book.queue_ask, i, i+1)
-	} else if side == BID {
+	case BID:
 		order = order_book.queue_bid[i]
 		order_book.queue_bid = slices.Delete(order_book.queue_bid, i, i+1)
-	} else {
+	default:
 		panic("Unknown OrderSide")
 	}
 
@@ -189,11 +192,12 @@ func (order_book *OrderBook) RawRemove(side OrderSide, i int) Order {
 
 // Gets corresponding queue.
 func (order_book *OrderBook) GetQueue(side OrderSide) *[]Order {
-	if side == BID {
+	switch side {
+	case BID:
 		return &order_book.queue_bid
-	} else if side == ASK {
+	case ASK:
 		return &order_book.queue_ask
-	} else {
+	default:
 		panic("Unknown OrderSide")
 	}
 }
@@ -201,11 +205,12 @@ func (order_book *OrderBook) GetQueue(side OrderSide) *[]Order {
 // Gets opposite corresponding queue. Useful to fill Orders,
 // as orders get filled by opposite side Orders.
 func (order_book *OrderBook) GetQueueFlip(side OrderSide) *[]Order {
-	if side == BID {
+	switch side {
+	case BID:
 		return &order_book.queue_ask
-	} else if side == ASK {
+	case ASK:
 		return &order_book.queue_bid
-	} else {
+	default:
 		panic("Unknown OrderSide")
 	}
 }
