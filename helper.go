@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"testing"
 )
 
@@ -53,4 +54,8 @@ func IsSortedFuncDesc[S ~[]E, E any](x S, cmp func(a, b E) int) bool {
 
 func Truncate(x f64, n int) f64 {
 	return math.Floor(x*math.Pow(10, f64(n))) * math.Pow(10, -f64(n))
+}
+
+func RandPrice() f32 {
+	return f32(Truncate(rand.Float64(), 2))
 }

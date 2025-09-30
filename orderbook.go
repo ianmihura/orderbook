@@ -5,9 +5,8 @@ import (
 )
 
 type OrderBook struct {
-	queue_ask           Queue
-	queue_bid           Queue
-	transaction_history *TransactionHistory
+	queue_ask Queue
+	queue_bid Queue
 }
 
 type FillReport struct {
@@ -184,4 +183,14 @@ func (order_book *OrderBook) Midprice() f32 {
 	} else {
 		return (order_book.queue_ask.Top().price + order_book.queue_bid.Top().price) / 2
 	}
+}
+
+// Bid-Ask spread (%)
+func (order_book *OrderBook) Spread() f32 {
+	if order_book.queue_ask.Top() == nil || order_book.queue_bid.Top() == nil {
+		return 0.0
+	}
+	ask_price := order_book.queue_ask.Top().price
+	bid_price := order_book.queue_bid.Top().price
+	return (ask_price - bid_price) / order_book.Midprice()
 }

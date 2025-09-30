@@ -38,7 +38,7 @@ func (order_book *OrderBook) PPrint() {
 		fmt.Printf("$%.2f %s\n", ask_print[i].a, ask_print[i].b)
 	}
 
-	fmt.Println()
+	fmt.Printf("\nMidprice:$%.2f, Spread:%.2f%%\n\n", order_book.Midprice(), order_book.Spread()*100)
 	depth = ""
 	quantity = 0
 	for i := order_book.queue_bid.Len() - 1; i >= 0; i-- {
@@ -46,7 +46,7 @@ func (order_book *OrderBook) PPrint() {
 		for range quantity/1000 + 1 {
 			depth += "█"
 		}
-		fmt.Printf("$%.2f %s %d\n", order_book.queue_bid.v[i].price, depth, order_book.queue_bid.v[i].size)
+		fmt.Printf("$%.2f %s\n", order_book.queue_bid.v[i].price, depth)
 	}
 }
 
