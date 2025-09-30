@@ -45,17 +45,20 @@ func TestAddLimit(t *testing.T) {
 	ob := OrderBook{}
 	for range 100 {
 		var oside OrderSide
+		var price f32
 		if rand.Float32() > 0.5 {
 			oside = BID
+			price = rand.Float32() + 1.0 // offset ensures we dont autofill limit orders
 		} else {
 			oside = ASK
+			price = rand.Float32()
 		}
 
 		o := Order{
 			id:      rand.Uint64(),
 			otype:   LIMIT,
 			side:    oside,
-			price:   rand.Float32() + float32(oside), // ensures we dont autofill limit orders
+			price:   price,
 			created: time.Now().Add(time.Duration(rand.Uint64())),
 		}
 		ob.Add(&o)

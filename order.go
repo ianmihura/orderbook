@@ -4,11 +4,11 @@ import (
 	"time"
 )
 
-type OrderSide i8
+type OrderSide bool
 type OrderType i8
 
-const BID OrderSide = 0
-const ASK OrderSide = 1
+const BID OrderSide = false
+const ASK OrderSide = true
 const LIMIT OrderType = 0
 const MARKET OrderType = 1
 

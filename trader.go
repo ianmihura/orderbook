@@ -52,5 +52,5 @@ func IsSortedFuncDesc[S ~[]E, E any](x S, cmp func(a, b E) int) bool {
 
 func main() {
 	ob := OrderBook{}
-	fmt.Println(ob.GetQueue(1))
+	fmt.Println(ob.GetQueue(ASK))
 }
