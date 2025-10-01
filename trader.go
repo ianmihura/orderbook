@@ -29,6 +29,7 @@ func createRandomOrder(midprice f32) *Order {
 
 func bootOB() *OrderBook {
 	orderbook := OrderBook{}
+	p := Portfolio{asset: 999_999, cash: 999_999}
 
 	for range 10 {
 		var oside OrderSide
@@ -42,11 +43,12 @@ func bootOB() *OrderBook {
 		}
 
 		orderbook.Add(&Order{
-			id:    rand.Uint64(),
-			otype: LIMIT,
-			side:  oside,
-			size:  rand.Int31n(10) + 1,
-			price: price, // revolve around 10
+			id:        rand.Uint64(),
+			portfolio: &p,
+			otype:     LIMIT,
+			side:      oside,
+			size:      rand.Int31n(10) + 1,
+			price:     price, // revolve around 10
 		})
 	}
 
@@ -55,11 +57,12 @@ func bootOB() *OrderBook {
 
 // Market Maker adds a limit order near the midprice.
 // Executes every ~2 seconds.
-func addTradeMM(orderbook *OrderBook, obLock *sync.Mutex) {
+func addTradeMM(orderbook *OrderBook, portfolio *Portfolio, obLock *sync.Mutex) {
 	for {
 		time.Sleep(time.Second * time.Duration(rand.Intn(2)))
 		// if orderbook.Spread() > 0.001 {
 		order := createRandomOrder(orderbook.Midprice())
+		order.portfolio = portfolio
 		obLock.Lock()
 		orderbook.Add(order)
 		obLock.Unlock()
@@ -67,12 +70,15 @@ func addTradeMM(orderbook *OrderBook, obLock *sync.Mutex) {
 	}
 }
 
-func userOrder() *Order {
+func userOrder(portfolio *Portfolio) *Order {
 	PrintNewOrderHelp()
 
 	var input string
 	fmt.Scan(&input)
 	ainput := strings.Split(input, ",")
+	if len(ainput) < 3 {
+		return nil
+	}
 
 	var otype OrderType
 	var oside OrderSide
@@ -101,6 +107,9 @@ func userOrder() *Order {
 	}
 
 	if otype != MARKET {
+		if len(ainput) < 4 {
+			return nil
+		}
 		price, err = strconv.ParseFloat(ainput[3], 32)
 		if err != nil {
 			return nil
@@ -108,11 +117,12 @@ func userOrder() *Order {
 	}
 
 	return &Order{
-		id:    rand.Uint64(),
-		otype: otype,
-		side:  oside,
-		size:  i32(size),
-		price: f32(price),
+		id:        rand.Uint64(),
+		portfolio: portfolio,
+		otype:     otype,
+		side:      oside,
+		size:      i32(size),
+		price:     f32(price),
 	}
 }
 
@@ -121,11 +131,15 @@ func main() {
 	orderbook = *bootOB()
 	obLock := &sync.Mutex{}
 
-	MM := 5
-	for range MM {
-		go addTradeMM(&orderbook, obLock)
+	MM := []*Portfolio{}
+	for range 5 {
+		portfolio := Portfolio{asset: 999_999, cash: 999_999}
+		go addTradeMM(&orderbook, &portfolio, obLock)
+		MM = append(MM, &portfolio)
 	}
 	stop := make(chan bool)
+
+	user_portfolio := Portfolio{asset: 0, cash: 100_000}
 
 	for {
 		fmt.Println("You're trading, type 'help' for help")
@@ -137,18 +151,24 @@ func main() {
 			orderbook.PPrint()
 		case "mid", "m":
 			fmt.Println(orderbook.Midprice())
+		case "display", "d":
+			go PrintDisplay(&orderbook, stop)
+
 		case "new", "n":
 			fmt.Println("We'll create a new order.")
-			order := userOrder()
+			order := userOrder(&user_portfolio)
 			if order != nil {
 				orderbook.Add(order)
 				fmt.Println("Order submitted succesfully!")
 			}
+		case "portfolio", "p":
+			user_portfolio.PPrint()
+		case "makers", "mm":
+			go PrintMakersPortfolio(&MM, stop)
+
 		case "clear", "c":
 			stop <- true
 			fmt.Print("\033[H\033[2J")
-		case "display", "d":
-			go PrintDisplay(&orderbook, stop)
 		case "reset", "r":
 			orderbook = *bootOB()
 		case "quit", "q":

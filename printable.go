@@ -20,7 +20,6 @@ func (order_book *OrderBook) Print() {
 		order_book.queue_bid.v[i].Print()
 	}
 }
-
 func (order_book *OrderBook) PPrint() {
 	// TODO max value dynamically
 	var quantity i32
@@ -50,24 +49,32 @@ func (order_book *OrderBook) PPrint() {
 	}
 }
 
-func (order Order) Print() {
+func (order *Order) Print() {
 	var side string
 	if order.side == BID {
 		side = "BID"
 	} else {
 		side = "ASK"
 	}
-	fmt.Printf("%s : $%.2f (q:%d)\n", side, order.price, order.size)
+	fmt.Printf("%s (%s) : $%.2f x%d\n", side, string(order.otype), order.price, order.size)
 }
-
-func (order Order) PPrint() {
+func (order *Order) PPrint() {
 	order.Print()
 }
 
-func (fill FillReport) Print() {
+func (fill *FillReport) Print() {
 	fmt.Printf("Filled %.2f%% at price $%.2f (q:%d)\n", fill.filled_pct, fill.price, fill.size)
 }
-
-func (fill FillReport) PPrint() {
+func (fill *FillReport) PPrint() {
 	fill.Print()
+}
+
+func (portfolio *Portfolio) Print() {
+	fmt.Printf("P: [%d] & [$%.2f]\n", portfolio.asset, portfolio.cash)
+}
+func (portfolio *Portfolio) PPrint() {
+	fmt.Println("Your portfolio balance:")
+	portfolio.Print()
+	fmt.Println("[assets] & [cash]")
+	fmt.Println()
 }

@@ -5,12 +5,12 @@ import (
 )
 
 type OrderSide bool
-type OrderType i8
+type OrderType rune
 
 const BID OrderSide = false
 const ASK OrderSide = true
-const LIMIT OrderType = 0
-const MARKET OrderType = 1
+const LIMIT OrderType = 'L'
+const MARKET OrderType = 'M'
 
 type Order struct {
 	portfolio  *Portfolio
@@ -24,42 +24,49 @@ type Order struct {
 	order_book *OrderBook
 }
 
+// created: time.Now().Add(time.Duration(rand.Uint64())),
+
 /*
 OB -> calls Fill on Order
-	-> calls Fill ok Portfolio
-		-> validates if can execute and modifies portfolio
+	Order -> calls Fill on Portfolio
+		Portfolio -> validates if can execute and modifies portfolio
 		<- returns ok / nok
-	if ok -> save to TransactionHistory
-	<- returns ok / nok to OB
+	<- if nok, returns fillreport
+	if ok -> save to TransactionHistory, edit Orders
+	<- returns fillreport
 */
 
+// Fills both orders up to the min(order_active.size, order_passive.size).
+// Will check in the portfolio if there is enough assets or cash.
+//
+// Note: portfolio either fills orders fully, or does not fill,
+// portfolios do not fill orders partially: if you have insuficient balance
+// in a portfolio, it will not fill the order partially
+//
+// Returns a FillReport, corresponding to the passive_order (as a convention).
 func (passive_order *Order) Fill(active_order *Order) *FillReport {
+	if active_order.otype == MARKET {
+		active_order.price = passive_order.price
+	}
+
 	can_fill_passive_order := passive_order.portfolio.CanFill(active_order)
 	can_fill_active_order := active_order.portfolio.CanFill(passive_order)
 
-	if can_fill_passive_order && can_fill_active_order {
-		// TODO enable rollback (just in case)
-		passive_order.portfolio.Fill(active_order)
-		active_order.portfolio.Fill(passive_order)
-
-		// TODO modify portfolio valies
-
-		// passive_order.order_book.transaction_history.Append(
-		// 	passive_order, active_order,
-		// )
-		return fill(passive_order, active_order)
-	} else {
+	if !can_fill_passive_order || !can_fill_active_order {
 		return &FillReport{}
 	}
-}
 
-func fill(passive_order, active_order *Order) *FillReport {
+	// Reflecting changes in the portfolio
+	passive_order.portfolio.Fill(active_order)
+	active_order.portfolio.Fill(passive_order)
+	// Save the transactions to history before they get changed
+	go AddToTxHistory(*passive_order, *active_order)
+
 	fill_report := FillReport{
 		price: passive_order.price,
 	}
-
 	if active_order.size >= passive_order.size {
-		// Filling active_order partially
+		// Filling active_order partially or totally
 		active_order.filled_pct = f32(passive_order.size) / f32(active_order.size)
 		active_order.size -= passive_order.size
 
@@ -73,6 +80,8 @@ func fill(passive_order, active_order *Order) *FillReport {
 		fill_report.size = active_order.size
 		fill_report.filled_pct = passive_order.filled_pct
 	}
+
+	go AddFillReport(active_order.id, &fill_report)
 
 	return &fill_report
 }

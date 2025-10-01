@@ -46,3 +46,19 @@ func PrintNewOrderHelp() {
 	fmt.Println()
 	fmt.Println(">")
 }
+
+func PrintMakersPortfolio(MM *[]*Portfolio, stop <-chan bool) {
+	for {
+		select {
+		case <-stop:
+			fmt.Print("\033[H\033[2J")
+			return
+		default:
+			time.Sleep(time.Millisecond * 100)
+			fmt.Print("\033[H\033[2J")
+			for _, p := range *MM {
+				p.Print()
+			}
+		}
+	}
+}

@@ -49,10 +49,15 @@ func addToMarket(order_book *OrderBook, active_order *Order) FillReport {
 	for pending_size > 0 && !queue_flip.IsEmpty() &&
 		shouldFillOrder(active_order, queue_flip.Top().price) {
 
+		// fill_report_tmp corresponds to passive_order
 		fill_report_tmp = *queue_flip.Top().Fill(active_order)
 
 		if fill_report_tmp.filled_pct == 1 {
+			// Removing empty top order
 			queue_flip.Pop()
+		} else if fill_report_tmp.filled_pct == 0 {
+			// Empty report => could not fill
+			break
 		}
 
 		total_spent += fill_report_tmp.price * f32(fill_report_tmp.size)

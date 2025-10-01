@@ -5,16 +5,6 @@ import (
 )
 
 /*
-0: 53
-1: 52
-2: 51 - ASK TOP
--- here we would match --
-2: 49 - BID TOP
-1: 48
-0: 47
-*/
-
-/*
 A Stack with a unique field v: array of Orders.
 
 The Top(), head, next, is the last element.
