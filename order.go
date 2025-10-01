@@ -11,6 +11,9 @@ const BID OrderSide = false
 const ASK OrderSide = true
 const LIMIT OrderType = 'L'
 const MARKET OrderType = 'M'
+const MID OrderType = 'D'
+const VWAP OrderType = 'V'
+const TWAP OrderType = 'T'
 
 type Order struct {
 	portfolio  *Portfolio

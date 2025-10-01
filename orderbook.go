@@ -17,13 +17,19 @@ type FillReport struct {
 
 // Adds Order to the OrderBook, with autofilling.
 // Returns a FillReport. Will panic if unknown OrderType
-func (order_book *OrderBook) Add(order *Order) FillReport {
+func (order_book *OrderBook) Add(order *Order) *FillReport {
 	// TODO: Will execute Fill function in the Order _
 	switch order.otype {
 	case MARKET:
 		return addToMarket(order_book, order)
 	case LIMIT:
 		return addLimit(order_book, order)
+	case MID:
+		return addMidprice(order_book, order)
+	case TWAP:
+		return addTWAP(order_book, order)
+	case VWAP:
+		return addVWAP(order_book, order)
 	default:
 		// TODO more order types coming
 		panic("Unknown OrderType")
@@ -39,7 +45,7 @@ func (order_book *OrderBook) Add(order *Order) FillReport {
 // removes filled orders from the order_book, edits partial fill orders.
 //
 // Returns a FillReport. Filled information is available here.
-func addToMarket(order_book *OrderBook, active_order *Order) FillReport {
+func addToMarket(order_book *OrderBook, active_order *Order) *FillReport {
 	init_order_size := active_order.size // the order size will change as it gets filled
 	pending_size := active_order.size
 	var total_spent f32
@@ -65,7 +71,7 @@ func addToMarket(order_book *OrderBook, active_order *Order) FillReport {
 	}
 	filled_size := init_order_size - pending_size
 
-	return FillReport{
+	return &FillReport{
 		price:      f32(total_spent) / f32(filled_size),
 		size:       filled_size,
 		filled_pct: f32(filled_size) / f32(init_order_size),
@@ -77,9 +83,9 @@ func addToMarket(order_book *OrderBook, active_order *Order) FillReport {
 // Then, will add the remaining order to the queue.
 //
 // Returns a FillReport.
-func addLimit(order_book *OrderBook, order *Order) FillReport {
+func addLimit(order_book *OrderBook, order *Order) *FillReport {
 	queue := *order_book.GetQueue(order.side)
-	fill_report := FillReport{}
+	fill_report := &FillReport{}
 
 	if shouldFillLimitOrder(order_book, order) {
 		fill_report = addToMarket(order_book, order)
@@ -129,6 +135,24 @@ func shouldFillOrder(order *Order, price f32) bool {
 	} else {
 		panic("Unknown OrderSide")
 	}
+}
+
+// TODO exec at midprice
+// cont
+func addMidprice(order_book *OrderBook, order *Order) *FillReport {
+	return &FillReport{}
+}
+
+// TODO time weight avg: average over last x time
+// space out evenly over period of time
+func addTWAP(order_book *OrderBook, order *Order) *FillReport {
+	return &FillReport{}
+}
+
+// TODO vol weight avg: weighting by volume
+// space out evenly over period of time
+func addVWAP(order_book *OrderBook, order *Order) *FillReport {
+	return &FillReport{}
 }
 
 // Finds and removes an Order from an OrderBook.

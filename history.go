@@ -31,7 +31,7 @@ func GetTxHistory() *TransactionHistory {
 }
 
 // Finds a tx in the history, based on the active id
-func FindInTxHistory(id u64) *Transaction {
+func findInTxHistory(id u64) *Transaction {
 	// loop from the back: its likely that were working with one of the latest added
 	tx_history := GetTxHistory()
 	for i := len(tx_history.orders) - 1; i >= 0; i-- {
@@ -45,7 +45,7 @@ func FindInTxHistory(id u64) *Transaction {
 // We save a copy of these orders before they get changed
 func AddToTxHistory(passive_order, active_order Order) {
 	tx_history := GetTxHistory()
-	tx := FindInTxHistory(active_order.id)
+	tx := findInTxHistory(active_order.id)
 	if tx == nil {
 		tx := Transaction{
 			active:  active_order,
@@ -59,11 +59,11 @@ func AddToTxHistory(passive_order, active_order Order) {
 
 // We save a copy of these orders before they get changed
 func AddFillReport(id u64, fill_report *FillReport) {
-	tx := FindInTxHistory(id)
+	tx := findInTxHistory(id)
 	for tx == nil {
-		tx = FindInTxHistory(id)
 		// Maybe the tx hasnt been created yet
 		time.Sleep(time.Second)
+		tx = findInTxHistory(id)
 	}
 	tx.reports = append(tx.reports, *fill_report)
 }

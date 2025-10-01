@@ -23,7 +23,7 @@ func createRandomOrder(midprice f32) *Order {
 		otype: LIMIT,
 		side:  oside,
 		size:  rand.Int31n(10) + 1,
-		price: midprice + RandPrice()*2 - 1,
+		price: midprice + RandPrice() - 0.5,
 	}
 }
 
@@ -97,6 +97,12 @@ func userOrder(portfolio *Portfolio) *Order {
 		otype = LIMIT
 	case "M":
 		otype = MARKET
+	case "D":
+		otype = MID
+	case "V":
+		otype = VWAP
+	case "T":
+		otype = TWAP
 	default:
 		return nil
 	}
@@ -106,7 +112,7 @@ func userOrder(portfolio *Portfolio) *Order {
 		return nil
 	}
 
-	if otype != MARKET {
+	if otype == LIMIT {
 		if len(ainput) < 4 {
 			return nil
 		}
@@ -158,7 +164,9 @@ func main() {
 			fmt.Println("We'll create a new order.")
 			order := userOrder(&user_portfolio)
 			if order != nil {
+				obLock.Lock()
 				orderbook.Add(order)
+				obLock.Unlock()
 				fmt.Println("Order submitted succesfully!")
 			}
 		case "portfolio", "p":
