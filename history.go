@@ -12,58 +12,108 @@ type Transaction struct {
 }
 
 type TransactionHistory struct {
-	orders []Transaction
+	txs map[u64]*Transaction
 }
 
 var txLock = &sync.Mutex{}
 
+// Singleton pattern
 var _tx_history *TransactionHistory
 
-func GetTxHistory() *TransactionHistory {
+func getTxHistory() *TransactionHistory {
 	if _tx_history == nil {
 		txLock.Lock()
 		defer txLock.Unlock()
 		if _tx_history == nil {
-			_tx_history = &TransactionHistory{}
+			_tx_history = &TransactionHistory{
+				txs: map[u64]*Transaction{},
+			}
 		}
 	}
 	return _tx_history
 }
 
-// Finds a tx in the history, based on the active id
-func findInTxHistory(id u64) *Transaction {
-	// loop from the back: its likely that were working with one of the latest added
-	tx_history := GetTxHistory()
-	for i := len(tx_history.orders) - 1; i >= 0; i-- {
-		if tx_history.orders[i].active.id == id {
-			return &tx_history.orders[i]
-		}
-	}
-	return nil
+func getTxById(id u64) *Transaction {
+	txs := getTxHistory().txs
+	var tx *Transaction
+	txLock.Lock()
+	tx = txs[id]
+	txLock.Unlock()
+	return tx
 }
 
-// We save a copy of these orders before they get changed
+// We save a copy of the orders, before they get changed
 func AddToTxHistory(passive_order, active_order Order) {
-	tx_history := GetTxHistory()
-	tx := findInTxHistory(active_order.id)
+	tx := getTxById(active_order.id)
 	if tx == nil {
 		tx := Transaction{
 			active:  active_order,
 			passive: []Order{passive_order},
 		}
-		tx_history.orders = append(tx_history.orders, tx)
+
+		tx_history := getTxHistory()
+		txLock.Lock()
+		tx_history.txs[active_order.id] = &tx
+		txLock.Unlock()
 	} else {
+		txLock.Lock()
 		tx.passive = append(tx.passive, passive_order)
+		txLock.Unlock()
 	}
 }
 
-// We save a copy of these orders before they get changed
+// We save a copy of the reports, before they get changed
 func AddFillReport(id u64, fill_report *FillReport) {
-	tx := findInTxHistory(id)
+	tx := getTxById(id)
 	for tx == nil {
 		// Maybe the tx hasnt been created yet
 		time.Sleep(time.Second)
-		tx = findInTxHistory(id)
+		tx = getTxById(id)
 	}
+	txLock.Lock()
 	tx.reports = append(tx.reports, *fill_report)
+	txLock.Unlock()
+}
+
+// Gets the first found active report from a list of reports.
+// Returns nil if it finds none.
+func getActiveReport(reports []FillReport) *FillReport {
+	for _, r := range reports {
+		if r.is_active {
+			return &r
+		}
+	}
+	return nil
+}
+
+// Compute the average of all executed prices, weighted by their size
+// We keep this function expensive because we wont use it very often
+func GetAvgPriceWeighted() f32 {
+	var weighted_price f32
+	var sum_weight i32
+	txs := getTxHistory().txs // Get a copy, just in case
+	for _, tx := range txs {
+		active_report := getActiveReport(tx.reports)
+		if active_report == nil {
+			continue
+		}
+		weighted_price += active_report.price * f32(active_report.size)
+		sum_weight += active_report.size
+	}
+	return weighted_price / f32(sum_weight)
+}
+
+// Compute the average of all executed prices
+// We keep this function expensive because we wont use it very often
+func GetAvgPrice() f32 {
+	var total_price f32
+	txs := getTxHistory().txs // Get a copy, just in case
+	for _, tx := range txs {
+		active_report := getActiveReport(tx.reports)
+		if active_report == nil {
+			continue
+		}
+		total_price += active_report.price
+	}
+	return total_price / f32(len(txs))
 }

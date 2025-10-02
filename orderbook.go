@@ -13,6 +13,7 @@ type FillReport struct {
 	price      f32
 	size       i32
 	filled_pct f32
+	is_active  bool
 }
 
 // Adds Order to the OrderBook, with autofilling.
@@ -71,11 +72,14 @@ func addToMarket(order_book *OrderBook, active_order *Order) *FillReport {
 	}
 	filled_size := init_order_size - pending_size
 
-	return &FillReport{
+	fill_report_tmp = FillReport{
 		price:      f32(total_spent) / f32(filled_size),
 		size:       filled_size,
 		filled_pct: f32(filled_size) / f32(init_order_size),
+		is_active:  true,
 	}
+	AddFillReport(active_order.id, &fill_report_tmp)
+	return &fill_report_tmp
 }
 
 // Will check if we should fill the limit Order, and
@@ -140,19 +144,24 @@ func shouldFillOrder(order *Order, price f32) bool {
 // TODO exec at midprice
 // cont
 func addMidprice(order_book *OrderBook, order *Order) *FillReport {
-	return &FillReport{}
+	order.price = order_book.Midprice()
+	return addLimit(order_book, order)
 }
 
 // TODO time weight avg: average over last x time
 // space out evenly over period of time
 func addTWAP(order_book *OrderBook, order *Order) *FillReport {
-	return &FillReport{}
+	order.price = GetAvgPrice()
+	// TODO split-up
+	return addLimit(order_book, order)
 }
 
 // TODO vol weight avg: weighting by volume
 // space out evenly over period of time
 func addVWAP(order_book *OrderBook, order *Order) *FillReport {
-	return &FillReport{}
+	order.price = GetAvgPriceWeighted()
+	// TODO split-up
+	return addLimit(order_book, order)
 }
 
 // Finds and removes an Order from an OrderBook.
@@ -216,7 +225,7 @@ func (order_book *OrderBook) Midprice() f32 {
 
 // Bid-Ask spread (%)
 func (order_book *OrderBook) Spread() f32 {
-	if order_book.queue_ask.Top() == nil || order_book.queue_bid.Top() == nil {
+	if order_book.queue_ask.IsEmpty() || order_book.queue_bid.IsEmpty() {
 		return 0.0
 	}
 	ask_price := order_book.queue_ask.Top().price

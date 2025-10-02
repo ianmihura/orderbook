@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -70,68 +68,6 @@ func addTradeMM(orderbook *OrderBook, portfolio *Portfolio, obLock *sync.Mutex) 
 	}
 }
 
-func userOrder(portfolio *Portfolio) *Order {
-	PrintNewOrderHelp()
-
-	var input string
-	fmt.Scan(&input)
-	ainput := strings.Split(input, ",")
-	if len(ainput) < 3 {
-		return nil
-	}
-
-	var otype OrderType
-	var oside OrderSide
-	var price f64
-	switch ainput[0] {
-	case "A":
-		oside = ASK
-	case "B":
-		oside = BID
-	default:
-		return nil
-	}
-
-	switch ainput[1] {
-	case "L":
-		otype = LIMIT
-	case "M":
-		otype = MARKET
-	case "D":
-		otype = MID
-	case "V":
-		otype = VWAP
-	case "T":
-		otype = TWAP
-	default:
-		return nil
-	}
-
-	size, err := strconv.Atoi(ainput[2])
-	if err != nil {
-		return nil
-	}
-
-	if otype == LIMIT {
-		if len(ainput) < 4 {
-			return nil
-		}
-		price, err = strconv.ParseFloat(ainput[3], 32)
-		if err != nil {
-			return nil
-		}
-	}
-
-	return &Order{
-		id:        rand.Uint64(),
-		portfolio: portfolio,
-		otype:     otype,
-		side:      oside,
-		size:      i32(size),
-		price:     f32(price),
-	}
-}
-
 func main() {
 	orderbook := OrderBook{}
 	orderbook = *bootOB()
@@ -153,32 +89,36 @@ func main() {
 		var input string
 		fmt.Scan(&input)
 		switch input {
-		case "orderbook", "ob", "o":
-			orderbook.PPrint()
-		case "mid", "m":
-			fmt.Println(orderbook.Midprice())
 		case "display", "d":
 			go PrintDisplay(&orderbook, stop)
+		case "makers", "mm":
+			go PrintMakersPortfolio(&MM, stop)
+		case "txs", "t":
+			getTxHistory().PPrint()
+			fmt.Println()
+			fmt.Println("Midprice:", orderbook.Midprice())
+			fmt.Println("TWAP:    ", GetAvgPrice())
+			fmt.Println("VWAP:    ", GetAvgPriceWeighted())
 
 		case "new", "n":
 			fmt.Println("We'll create a new order.")
-			order := userOrder(&user_portfolio)
+			order := UserOrder(&user_portfolio)
 			if order != nil {
 				obLock.Lock()
-				orderbook.Add(order)
+				report := orderbook.Add(order)
 				obLock.Unlock()
 				fmt.Println("Order submitted succesfully!")
+				report.PPrint()
 			}
 		case "portfolio", "p":
 			user_portfolio.PPrint()
-		case "makers", "mm":
-			go PrintMakersPortfolio(&MM, stop)
 
-		case "clear", "c":
+		case "clear", "close", "c":
 			stop <- true
 			fmt.Print("\033[H\033[2J")
 		case "reset", "r":
 			orderbook = *bootOB()
+			// TODO reset history of tx
 		case "quit", "q":
 			os.Exit(0)
 		default:

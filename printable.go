@@ -63,7 +63,12 @@ func (order *Order) PPrint() {
 }
 
 func (fill *FillReport) Print() {
-	fmt.Printf("Filled %.2f%% at price $%.2f (q:%d)\n", fill.filled_pct, fill.price, fill.size)
+	fmt.Printf("Filled %.0f%% at $%.2f x%d", fill.filled_pct*100, fill.price, fill.size)
+	if fill.is_active {
+		fmt.Print(" (A)\n")
+	} else {
+		fmt.Print("\n")
+	}
 }
 func (fill *FillReport) PPrint() {
 	fill.Print()
@@ -77,4 +82,39 @@ func (portfolio *Portfolio) PPrint() {
 	portfolio.Print()
 	fmt.Println("[assets] & [cash]")
 	fmt.Println()
+}
+
+func (tx *Transaction) Print() {
+	fmt.Println("Past transaction:")
+	fmt.Println("Active order:")
+	tx.active.Print()
+	fmt.Println("Last report:")
+	tx.reports[len(tx.reports)-1].Print()
+	fmt.Println()
+}
+func (tx *Transaction) PPrint() {
+	fmt.Println("Past transaction:")
+	fmt.Println("  Active order:")
+	tx.active.Print()
+	fmt.Println("  Passive orders:")
+	for _, order := range tx.passive {
+		order.Print()
+	}
+	fmt.Println("  Reports:")
+	for _, report := range tx.reports {
+		report.Print()
+	}
+	fmt.Println()
+}
+
+func (txh *TransactionHistory) Print() {
+	for _, tx := range txh.txs {
+		tx.Print()
+	}
+}
+func (txh *TransactionHistory) PPrint() {
+	for _, tx := range txh.txs {
+		tx.PPrint()
+	}
+	fmt.Println("Total transactions:", len(txh.txs))
 }

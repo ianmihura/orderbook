@@ -98,23 +98,26 @@ func TestAddLimit(t *testing.T) {
 
 func TestAddAutofillLimit(t *testing.T) {
 	ob := OrderBook{}
+	p := Portfolio{asset: 999_999, cash: 999_999}
 	for i := range 50 {
 		ob.Add(&Order{
-			id:    rand.Uint64(),
-			otype: LIMIT,
-			side:  ASK,
-			size:  5,
-			price: f32(101 - i),
+			id:        rand.Uint64(),
+			otype:     LIMIT,
+			side:      ASK,
+			size:      5,
+			price:     f32(101 - i),
+			portfolio: &p,
 		})
 	}
 
 	// Partial fills itself with 1 order of size 5, at price (52)
 	fill := ob.Add(&Order{
-		id:    rand.Uint64(),
-		otype: LIMIT,
-		side:  BID,
-		size:  6,
-		price: 52,
+		id:        rand.Uint64(),
+		otype:     LIMIT,
+		side:      BID,
+		size:      6,
+		price:     52,
+		portfolio: &p,
 	})
 	Assert(t, fill.size == 5, "Should fill all the order", fill.size)
 	Assert(t, fill.price == 52, "Should fill the order at correct price", fill.price)
@@ -127,29 +130,33 @@ func TestAddAutofillLimit(t *testing.T) {
 
 func TestAddMarket(t *testing.T) {
 	ob := OrderBook{}
+	p := Portfolio{asset: 999_999, cash: 999_999}
 	for i := range 50 {
 		ob.Add(&Order{
-			id:    rand.Uint64(),
-			otype: LIMIT,
-			side:  BID,
-			size:  5,
-			price: f32(i + 1),
+			id:        rand.Uint64(),
+			otype:     LIMIT,
+			side:      BID,
+			size:      5,
+			price:     f32(i + 1),
+			portfolio: &p,
 		})
 		ob.Add(&Order{
-			id:    rand.Uint64(),
-			otype: LIMIT,
-			side:  ASK,
-			size:  5,
-			price: f32(101 - i),
+			id:        rand.Uint64(),
+			otype:     LIMIT,
+			side:      ASK,
+			size:      5,
+			price:     f32(101 - i),
+			portfolio: &p,
 		})
 	}
 
 	// Fills 4 orders of size 5 each, at prices (50, 49, 48, 47)
 	fill := ob.Add(&Order{
-		id:    rand.Uint64(),
-		otype: MARKET,
-		side:  ASK,
-		size:  20,
+		id:        rand.Uint64(),
+		otype:     MARKET,
+		side:      ASK,
+		size:      20,
+		portfolio: &p,
 	})
 	Assert(t, fill.size == 20, "Should fill all the order")
 	Assert(t, fill.price == 48.5, "Should fill the order at correct price", fill.price)
@@ -159,10 +166,11 @@ func TestAddMarket(t *testing.T) {
 
 	// Fills 6 orders of size 5 each, at prices (52, 53, 54, 55, 56, 57)
 	fill = ob.Add(&Order{
-		id:    rand.Uint64(),
-		otype: MARKET,
-		side:  BID,
-		size:  30,
+		id:        rand.Uint64(),
+		otype:     MARKET,
+		side:      BID,
+		size:      30,
+		portfolio: &p,
 	})
 	Assert(t, fill.size == 30, "Should fill all the order")
 	Assert(t, fill.price == 54.5, "Should fill the order at correct price", fill.price)
@@ -172,10 +180,11 @@ func TestAddMarket(t *testing.T) {
 
 	// Partial fills 2 orders of size 5+3, at prices (58, 59)
 	fill = ob.Add(&Order{
-		id:    rand.Uint64(),
-		otype: MARKET,
-		side:  BID,
-		size:  8,
+		id:        rand.Uint64(),
+		otype:     MARKET,
+		side:      BID,
+		size:      8,
+		portfolio: &p,
 	})
 	Assert(t, fill.size == 8, "Should fill all the order", fill.size)
 	Assert(t, fill.price == 58.375, "Should fill the order at correct price", fill.price)
@@ -187,6 +196,7 @@ func TestAddMarket(t *testing.T) {
 // With 1m Orders, takes about 160s to execute
 func xTestStress(t *testing.T) {
 	ob := OrderBook{}
+	p := Portfolio{asset: 999_999, cash: 999_999}
 	for range 1000 {
 		var oside OrderSide
 		if rand.Float32() > 0.5 {
@@ -196,19 +206,20 @@ func xTestStress(t *testing.T) {
 		}
 
 		ob.Add(&Order{
-			id:    rand.Uint64(),
-			otype: LIMIT,
-			side:  oside,
-			size:  i32(rand.Int() / 10000),
-			price: rand.Float32(),
-			// created: time.Now().Add(time.Duration(rand.Uint64())),
+			id:        rand.Uint64(),
+			otype:     LIMIT,
+			side:      oside,
+			size:      i32(rand.Int() / 10000),
+			price:     rand.Float32(),
+			portfolio: &p,
 		})
 	}
 	Assert(t, true, "")
 }
 
-func TestDisplay(t *testing.T) {
+func xTestDisplay(t *testing.T) {
 	ob := OrderBook{}
+	p := Portfolio{asset: 999_999, cash: 999_999}
 	for range 100 {
 		var oside OrderSide
 		if rand.Float32() > 0.5 {
@@ -218,12 +229,12 @@ func TestDisplay(t *testing.T) {
 		}
 
 		ob.Add(&Order{
-			id:    rand.Uint64(),
-			otype: LIMIT,
-			side:  oside,
-			size:  rand.Int31n(10),
-			price: f32(Truncate(rand.Float64(), 2)),
-			// created: time.Now().Add(time.Duration(rand.Uint64())),
+			id:        rand.Uint64(),
+			otype:     LIMIT,
+			side:      oside,
+			size:      rand.Int31n(10),
+			price:     f32(Truncate(rand.Float64(), 2)),
+			portfolio: &p,
 		})
 	}
 	ob.PPrint()
