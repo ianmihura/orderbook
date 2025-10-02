@@ -59,3 +59,11 @@ func Truncate(x f64, n int) f64 {
 func RandPrice() f32 {
 	return f32(Truncate(rand.Float64(), 2))
 }
+
+func Abs(f f32) f32 {
+	if f < 0 {
+		return -f
+	} else {
+		return f
+	}
+}

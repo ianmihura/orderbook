@@ -1,9 +1,5 @@
 package main
 
-import (
-	"time"
-)
-
 type OrderSide bool
 type OrderType rune
 
@@ -16,13 +12,13 @@ const VWAP OrderType = 'V'
 const TWAP OrderType = 'T'
 
 type Order struct {
-	portfolio  *Portfolio
-	id         u64
-	otype      OrderType
-	side       OrderSide
-	size       i32
-	price      f32
-	created    time.Time
+	portfolio *Portfolio
+	id        u64
+	otype     OrderType
+	side      OrderSide
+	size      i32
+	price     f32
+	// created    time.Time
 	filled_pct f32
 	order_book *OrderBook
 }

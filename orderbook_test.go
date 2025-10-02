@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"slices"
 	"testing"
-	"time"
 )
 
 func createQueue(length int) Queue {
@@ -64,11 +63,10 @@ func TestAddLimit(t *testing.T) {
 		}
 
 		o := Order{
-			id:      rand.Uint64(),
-			otype:   LIMIT,
-			side:    oside,
-			price:   price,
-			created: time.Now().Add(time.Duration(rand.Uint64())),
+			id:    rand.Uint64(),
+			otype: LIMIT,
+			side:  oside,
+			price: price,
 		}
 		ob.Add(&o)
 	}
