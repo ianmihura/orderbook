@@ -81,7 +81,7 @@ func main() {
 	}
 	stop := make(chan bool)
 
-	user_portfolio := Portfolio{asset: 0, cash: 100_000}
+	user_portfolio := Portfolio{asset: 0, cash: 100_000, is_user: true}
 
 	for {
 		fmt.Println("You're trading, type 'help' for help")
@@ -111,7 +111,7 @@ func main() {
 				report.PPrint()
 			}
 		case "portfolio", "p":
-			user_portfolio.PPrint()
+			user_portfolio.PPrint(orderbook.Midprice())
 
 		case "clear", "close", "c":
 			stop <- true

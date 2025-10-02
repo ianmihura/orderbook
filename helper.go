@@ -18,8 +18,8 @@ type i16 = int16
 type i32 = int32
 type i64 = int64
 
-type Pair struct {
-	a, b any
+type Tuple struct {
+	a, b, c any
 }
 
 type BaseError struct {

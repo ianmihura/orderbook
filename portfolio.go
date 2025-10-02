@@ -1,8 +1,9 @@
 package main
 
 type Portfolio struct {
-	cash  f32
-	asset i32
+	cash    f32
+	asset   i32
+	is_user bool
 }
 
 // Checks if current balance (either cash or asset)

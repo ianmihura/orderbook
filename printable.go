@@ -7,45 +7,53 @@ type Printable interface {
 	PPrint()
 }
 
-func (order_book *OrderBook) Print() {
+func (orderbook *OrderBook) Print() {
 	fmt.Println()
 	fmt.Println("OrderBook")
 	fmt.Println()
 
-	for i := range order_book.queue_ask.Len() {
-		order_book.queue_ask.v[i].Print()
+	for i := range orderbook.queue_ask.Len() {
+		orderbook.queue_ask.v[i].Print()
 	}
 	fmt.Println()
-	for i := order_book.queue_bid.Len() - 1; i >= 0; i-- {
-		order_book.queue_bid.v[i].Print()
+	for i := orderbook.queue_bid.Len() - 1; i >= 0; i-- {
+		orderbook.queue_bid.v[i].Print()
 	}
 }
-func (order_book *OrderBook) PPrint() {
+func (orderbook *OrderBook) PPrint() {
 	// TODO max value dynamically
 	var quantity i32
 	var depth string
-	var ask_print []Pair
+	var ask_print []Tuple
 
-	for i := order_book.queue_ask.Len() - 1; i >= 0; i-- {
-		quantity += order_book.queue_ask.v[i].size
+	for i := orderbook.queue_ask.Len() - 1; i >= 0; i-- {
+		quantity += orderbook.queue_ask.v[i].size
 		for range quantity/1000 + 1 {
 			depth += "█"
 		}
-		ask_print = append(ask_print, Pair{order_book.queue_ask.v[i].price, depth})
+		ask_print = append(ask_print, Tuple{orderbook.queue_ask.v[i].price, depth, orderbook.queue_ask.v[i].portfolio.is_user})
 	}
 	for i := len(ask_print) - 1; i >= 0; i-- {
-		fmt.Printf("$%.2f %s\n", ask_print[i].a, ask_print[i].b)
+		fmt.Printf("$%.2f %s", ask_print[i].a, ask_print[i].b)
+		if ask_print[i].c == true {
+			fmt.Print(" (U)")
+		}
+		fmt.Print("\n")
 	}
 
-	fmt.Printf("\nMidprice:$%.2f, Spread:%.2f%%\n\n", order_book.Midprice(), order_book.Spread()*100)
+	fmt.Printf("\nMidprice:$%.2f, Spread:%.2f%%\n\n", orderbook.Midprice(), orderbook.Spread()*100)
 	depth = ""
 	quantity = 0
-	for i := order_book.queue_bid.Len() - 1; i >= 0; i-- {
-		quantity += order_book.queue_bid.v[i].size
+	for i := orderbook.queue_bid.Len() - 1; i >= 0; i-- {
+		quantity += orderbook.queue_bid.v[i].size
 		for range quantity/1000 + 1 {
 			depth += "█"
 		}
-		fmt.Printf("$%.2f %s\n", order_book.queue_bid.v[i].price, depth)
+		fmt.Printf("$%.2f %s", orderbook.queue_bid.v[i].price, depth)
+		if orderbook.queue_bid.v[i].portfolio.is_user {
+			fmt.Print(" (U)")
+		}
+		fmt.Print("\n")
 	}
 }
 
@@ -75,12 +83,14 @@ func (fill *FillReport) PPrint() {
 }
 
 func (portfolio *Portfolio) Print() {
-	fmt.Printf("P: [%d] & [$%.2f]\n", portfolio.asset, portfolio.cash)
+	fmt.Printf("[$%.2f] & [x%d]\n", portfolio.cash, portfolio.asset)
 }
-func (portfolio *Portfolio) PPrint() {
-	fmt.Println("Your portfolio balance:")
+func (portfolio *Portfolio) PPrint(midprice f32) {
+	fmt.Println("Your portfolio is worth:")
+	fmt.Printf("$%.2f\n", f32(portfolio.asset)*midprice+portfolio.cash)
+	fmt.Println("Portfolio balance:")
 	portfolio.Print()
-	fmt.Println("[assets] & [cash]")
+	fmt.Println("[cash] & [assets]")
 	fmt.Println()
 }
 

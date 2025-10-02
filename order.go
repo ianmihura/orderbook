@@ -20,7 +20,7 @@ type Order struct {
 	price     f32
 	// created    time.Time
 	filled_pct f32
-	order_book *OrderBook
+	orderbook  *OrderBook
 }
 
 // created: time.Now().Add(time.Duration(rand.Uint64())),

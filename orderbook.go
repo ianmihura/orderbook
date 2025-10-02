@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"math/rand"
 	"sort"
+	"time"
 )
 
 type OrderBook struct {
@@ -18,19 +21,19 @@ type FillReport struct {
 
 // Adds Order to the OrderBook, with autofilling.
 // Returns a FillReport. Will panic if unknown OrderType
-func (order_book *OrderBook) Add(order *Order) *FillReport {
+func (orderbook *OrderBook) Add(order *Order) *FillReport {
 	// TODO: Will execute Fill function in the Order _
 	switch order.otype {
 	case MARKET:
-		return addToMarket(order_book, order)
+		return addToMarket(orderbook, order)
 	case LIMIT:
-		return addLimit(order_book, order)
+		return addLimit(orderbook, order)
 	case MID:
-		return addMidprice(order_book, order)
+		return addMidprice(orderbook, order)
 	case TWAP:
-		return addTWAP(order_book, order)
+		return addTWAP(orderbook, order)
 	case VWAP:
-		return addVWAP(order_book, order)
+		return addVWAP(orderbook, order)
 	default:
 		// TODO more order types coming
 		panic("Unknown OrderType")
@@ -43,15 +46,15 @@ func (order_book *OrderBook) Add(order *Order) *FillReport {
 // we'll exit without completing the intended order size.
 //
 // Side effects: Edits the active_order size and filled_pct,
-// removes filled orders from the order_book, edits partial fill orders.
+// removes filled orders from the orderbook, edits partial fill orders.
 //
 // Returns a FillReport. Filled information is available here.
-func addToMarket(order_book *OrderBook, active_order *Order) *FillReport {
+func addToMarket(orderbook *OrderBook, active_order *Order) *FillReport {
 	init_order_size := active_order.size // the order size will change as it gets filled
 	pending_size := active_order.size
 	var total_spent f32
 	var fill_report_tmp FillReport
-	queue_flip := order_book.GetQueueFlip(active_order.side)
+	queue_flip := orderbook.GetQueueFlip(active_order.side)
 
 	for pending_size > 0 && !queue_flip.IsEmpty() &&
 		shouldFillOrder(active_order, queue_flip.Top().price) {
@@ -87,12 +90,12 @@ func addToMarket(order_book *OrderBook, active_order *Order) *FillReport {
 // Then, will add the remaining order to the queue.
 //
 // Returns a FillReport.
-func addLimit(order_book *OrderBook, order *Order) *FillReport {
-	queue := *order_book.GetQueue(order.side)
+func addLimit(orderbook *OrderBook, order *Order) *FillReport {
+	queue := *orderbook.GetQueue(order.side)
 	fill_report := &FillReport{}
 
-	if shouldFillLimitOrder(order_book, order) {
-		fill_report = addToMarket(order_book, order)
+	if shouldFillLimitOrder(orderbook, order) {
+		fill_report = addToMarket(orderbook, order)
 		if fill_report.filled_pct == 1.0 {
 			return fill_report
 		}
@@ -102,21 +105,21 @@ func addLimit(order_book *OrderBook, order *Order) *FillReport {
 		index := sort.Search(queue.Len(), func(i int) bool {
 			return queue.v[i].price > order.price
 		})
-		order_book.queue_bid.Insert(index, *order)
+		orderbook.queue_bid.Insert(index, *order)
 	} else {
 		index := sort.Search(queue.Len(), func(i int) bool {
 			return queue.v[i].price < order.price
 		})
-		order_book.queue_ask.Insert(index, *order)
+		orderbook.queue_ask.Insert(index, *order)
 	}
 
-	order.order_book = order_book
+	order.orderbook = orderbook
 	return fill_report
 }
 
 // Will check if a limit Order needs to be filled.
-func shouldFillLimitOrder(order_book *OrderBook, order *Order) bool {
-	queue := *order_book.GetQueueFlip(order.side)
+func shouldFillLimitOrder(orderbook *OrderBook, order *Order) bool {
+	queue := *orderbook.GetQueueFlip(order.side)
 	if queue.IsEmpty() {
 		return false
 	} else if order.side == ASK && order.price <= queue.Top().price {
@@ -141,39 +144,64 @@ func shouldFillOrder(order *Order, price f32) bool {
 	}
 }
 
-// TODO exec at midprice
-// cont
-func addMidprice(order_book *OrderBook, order *Order) *FillReport {
-	order.price = order_book.Midprice()
-	return addLimit(order_book, order)
+func addMidprice(orderbook *OrderBook, order *Order) *FillReport {
+	order.price = orderbook.Midprice()
+	return addLimit(orderbook, order)
 }
 
-// TODO time weight avg: average over last x time
-// space out evenly over period of time
-func addTWAP(order_book *OrderBook, order *Order) *FillReport {
-	order.price = GetAvgPrice()
-	// TODO split-up
-	return addLimit(order_book, order)
+// Will split up orders in random slots.
+// Size will be typical order size +- 20%.
+// Spaced out, every few random seconds [0,3).
+// Price will always be the Average executed price.
+func addTWAP(orderbook *OrderBook, order *Order) *FillReport {
+	fill_report := FillReport{}
+	for order.size >= 0 {
+		avgSize := GetAvgSize()
+		_order := order
+		_order.id = rand.Uint64()
+		_order.price = GetAvgPrice()
+		_order.size = avgSize + i32(f32(avgSize)*(rand.Float32()-0.5)/2.5) // error term: 0.5/2.5 = ±20%
+		_order.otype = LIMIT
+		fmt.Println("Doing one")
+		fill_report_tmp := addLimit(orderbook, _order)
+		time.Sleep(time.Second * time.Duration(rand.Intn(3)))
+		order.size -= fill_report_tmp.size
+
+		// How do we get all the filling info?
+		// v1. naif
+		// v2. we wait for a fill every time before we submit the next
+		// v3. goroutine every submit, when we get the fillreport we add the number
+		// fill_report.size += fill_report_tmp.size
+	}
+	// fill_report = FillReport{
+	// 	price:      f32(total_spent) / f32(filled_size),
+	// 	size:       filled_size,
+	// 	filled_pct: f32(filled_size) / f32(init_order_size),
+	// 	is_active:  true,
+	// }
+	return &fill_report
 }
 
-// TODO vol weight avg: weighting by volume
-// space out evenly over period of time
-func addVWAP(order_book *OrderBook, order *Order) *FillReport {
+// Will split up orders in random slots.
+// Size will be typical order size +- 20%.
+// Spaced out, every few random seconds [0,4].
+// Price will always be the Average executed price. weighted by volume.
+func addVWAP(orderbook *OrderBook, order *Order) *FillReport {
 	order.price = GetAvgPriceWeighted()
 	// TODO split-up
-	return addLimit(order_book, order)
+	return addLimit(orderbook, order)
 }
 
 // Finds and removes an Order from an OrderBook.
 // Does not fill orders, only removes element from stack.
 //
 // Returns removed Order, or error if finds != 1 Orders with same ID.
-func (order_book *OrderBook) Remove(order *Order) (*Order, error) {
-	queue := *order_book.GetQueue(order.side)
+func (orderbook *OrderBook) Remove(order *Order) (*Order, error) {
+	queue := *orderbook.GetQueue(order.side)
 	order_idxs := queue.FindAll(*order)
 
 	if len(order_idxs) == 1 {
-		o := order_book.rawRemove(order.side, order_idxs[0])
+		o := orderbook.rawRemove(order.side, order_idxs[0])
 		return &o, nil
 	} else {
 		return nil, &BaseError{"Found orders matching your index:", len(order_idxs)}
@@ -184,51 +212,51 @@ func (order_book *OrderBook) Remove(order *Order) (*Order, error) {
 // Does not fill orders, only removes element from array.
 //
 // Returns removed Order.
-func (order_book *OrderBook) rawRemove(side OrderSide, i int) Order {
+func (orderbook *OrderBook) rawRemove(side OrderSide, i int) Order {
 	var order Order
 	if side == BID {
-		order = order_book.queue_bid.Remove(i)
+		order = orderbook.queue_bid.Remove(i)
 	} else {
-		order = order_book.queue_ask.Remove(i)
+		order = orderbook.queue_ask.Remove(i)
 	}
 
 	return order
 }
 
 // Gets corresponding queue.
-func (order_book *OrderBook) GetQueue(side OrderSide) *Queue {
+func (orderbook *OrderBook) GetQueue(side OrderSide) *Queue {
 	if side == BID {
-		return &order_book.queue_bid
+		return &orderbook.queue_bid
 	} else {
-		return &order_book.queue_ask
+		return &orderbook.queue_ask
 	}
 }
 
 // Gets opposite corresponding queue. Useful to fill Orders,
 // as orders get filled by opposite side Orders.
-func (order_book *OrderBook) GetQueueFlip(side OrderSide) *Queue {
+func (orderbook *OrderBook) GetQueueFlip(side OrderSide) *Queue {
 	if side == BID {
-		return &order_book.queue_ask
+		return &orderbook.queue_ask
 	} else {
-		return &order_book.queue_bid
+		return &orderbook.queue_bid
 	}
 }
 
 // Returns the midpoint (avg) between the two Top prices, known as the MidPrice
-func (order_book *OrderBook) Midprice() f32 {
-	if order_book.queue_ask.IsEmpty() || order_book.queue_bid.IsEmpty() {
+func (orderbook *OrderBook) Midprice() f32 {
+	if orderbook.queue_ask.IsEmpty() || orderbook.queue_bid.IsEmpty() {
 		return 0.0
 	} else {
-		return (order_book.queue_ask.Top().price + order_book.queue_bid.Top().price) / 2
+		return (orderbook.queue_ask.Top().price + orderbook.queue_bid.Top().price) / 2
 	}
 }
 
 // Bid-Ask spread (%)
-func (order_book *OrderBook) Spread() f32 {
-	if order_book.queue_ask.IsEmpty() || order_book.queue_bid.IsEmpty() {
+func (orderbook *OrderBook) Spread() f32 {
+	if orderbook.queue_ask.IsEmpty() || orderbook.queue_bid.IsEmpty() {
 		return 0.0
 	}
-	ask_price := order_book.queue_ask.Top().price
-	bid_price := order_book.queue_bid.Top().price
-	return (ask_price - bid_price) / order_book.Midprice()
+	ask_price := orderbook.queue_ask.Top().price
+	bid_price := orderbook.queue_bid.Top().price
+	return (ask_price - bid_price) / orderbook.Midprice()
 }

@@ -117,3 +117,18 @@ func GetAvgPrice() f32 {
 	}
 	return total_price / f32(len(txs))
 }
+
+// Compute the average of all executed sizes
+// We keep this function expensive because we wont use it very often
+func GetAvgSize() i32 {
+	var total_size i32
+	txs := getTxHistory().txs // Get a copy, just in case
+	for _, tx := range txs {
+		active_report := getActiveReport(tx.reports)
+		if active_report == nil {
+			continue
+		}
+		total_size += active_report.size
+	}
+	return total_size / i32(len(txs))
+}
