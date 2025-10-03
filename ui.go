@@ -28,7 +28,7 @@ func PrintHelp() {
 	fmt.Println("List of commands:")
 	fmt.Println("  Orderbook:")
 	fmt.Println("    d, display: watch the ob go by")
-	fmt.Println("    mm, makers: display portfolio of all Market Makers")
+	fmt.Println("    a, auto: display portfolio of all auto traders")
 	fmt.Println("    t, txs: see all past transactions")
 	fmt.Println("  User:")
 	fmt.Println("    n, new: create new order")
@@ -56,7 +56,7 @@ func PrintNewOrderHelp() {
 	fmt.Println(">")
 }
 
-func PrintMakersPortfolio(MM *[]*Portfolio, stop <-chan bool) {
+func PrintAutoTradersPortfolio(auto_traders *[]*Portfolio, orderbook *OrderBook, stop <-chan bool) {
 	for {
 		select {
 		case <-stop:
@@ -65,8 +65,8 @@ func PrintMakersPortfolio(MM *[]*Portfolio, stop <-chan bool) {
 		default:
 			time.Sleep(time.Millisecond * 100)
 			fmt.Print("\033[H\033[2J")
-			for _, p := range *MM {
-				p.Print()
+			for _, p := range *auto_traders {
+				p.Print(orderbook.Midprice())
 			}
 			fmt.Print("\nType c to close")
 		}

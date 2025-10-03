@@ -56,6 +56,7 @@ func (passive_order *Order) Fill(active_order *Order) *FillReport {
 	}
 
 	// Reflecting changes in the portfolio
+	// TODO error: sending the full order to be filled by the portfolio, assuming I'll fill it fully
 	passive_order.portfolio.Fill(active_order)
 	active_order.portfolio.Fill(passive_order)
 	// Save the transactions to history before they get changed

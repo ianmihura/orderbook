@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"sync"
 	"time"
 )
 
 type OrderBook struct {
 	queue_ask Queue
 	queue_bid Queue
+	lock      *sync.Mutex
 }
 
 type FillReport struct {

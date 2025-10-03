@@ -22,6 +22,9 @@ func (orderbook *OrderBook) Print() {
 }
 func (orderbook *OrderBook) PPrint() {
 	// TODO max value dynamically
+	// TODO stack by price (aggregate):
+	// - make a hashmap that indexes, by quantiles (5-15 quantiles)
+	// print an index of vol in the bottom
 	var quantity i32
 	var depth string
 	var ask_print []Tuple
@@ -82,14 +85,14 @@ func (fill *FillReport) PPrint() {
 	fill.Print()
 }
 
-func (portfolio *Portfolio) Print() {
-	fmt.Printf("[$%.2f] & [x%d]\n", portfolio.cash, portfolio.asset)
+func (portfolio *Portfolio) Print(midprice f32) {
+	fmt.Printf("[$%.2f] & [x%d] = $%.2f\n", portfolio.cash, portfolio.asset, f32(portfolio.asset)*midprice+portfolio.cash)
 }
 func (portfolio *Portfolio) PPrint(midprice f32) {
 	fmt.Println("Your portfolio is worth:")
 	fmt.Printf("$%.2f\n", f32(portfolio.asset)*midprice+portfolio.cash)
 	fmt.Println("Portfolio balance:")
-	portfolio.Print()
+	fmt.Printf("[$%.2f] & [x%d]\n", portfolio.cash, portfolio.asset)
 	fmt.Println("[cash] & [assets]")
 	fmt.Println()
 }

@@ -148,19 +148,24 @@ func TestAddMarket(t *testing.T) {
 		})
 	}
 
+	p2 := Portfolio{asset: 999_999, cash: 0}
 	// Fills 4 orders of size 5 each, at prices (50, 49, 48, 47)
 	fill := ob.Add(&Order{
 		id:        rand.Uint64(),
 		otype:     MARKET,
 		side:      ASK,
 		size:      20,
-		portfolio: &p,
+		portfolio: &p2,
 	})
 	Assert(t, fill.size == 20, "Should fill all the order")
 	Assert(t, fill.price == 48.5, "Should fill the order at correct price", fill.price)
 	Assert(t, fill.filled_pct == 1, "Should fill all filled_pct", fill.filled_pct)
 	Assert(t, ob.queue_bid.Len() == 46, "Should take 4 orders off the BID queue")
 	Assert(t, ob.queue_ask.Len() == 50, "Should leave the ASK queue intact")
+	Assert(t, p.cash == 999_999-48.5*20, "Error in portfolio passive cash:", p.cash)
+	Assert(t, p2.cash == 48.5*20, "Error in portfolio active cash:", p2.cash)
+	Assert(t, p.asset == 999_999+20, "Error in portfolio passive assets:", p.asset)
+	Assert(t, p2.asset == 999_999-20, "Error in portfolio active assets:", p2.asset)
 
 	// Fills 6 orders of size 5 each, at prices (52, 53, 54, 55, 56, 57)
 	fill = ob.Add(&Order{
@@ -196,17 +201,10 @@ func xTestStress(t *testing.T) {
 	ob := OrderBook{}
 	p := Portfolio{asset: 999_999, cash: 999_999}
 	for range 1000 {
-		var oside OrderSide
-		if rand.Float32() > 0.5 {
-			oside = BID
-		} else {
-			oside = ASK
-		}
-
 		ob.Add(&Order{
 			id:        rand.Uint64(),
 			otype:     LIMIT,
-			side:      oside,
+			side:      RandChoice(BID, ASK),
 			size:      i32(rand.Int() / 10000),
 			price:     rand.Float32(),
 			portfolio: &p,
@@ -219,17 +217,10 @@ func xTestDisplay(t *testing.T) {
 	ob := OrderBook{}
 	p := Portfolio{asset: 999_999, cash: 999_999}
 	for range 100 {
-		var oside OrderSide
-		if rand.Float32() > 0.5 {
-			oside = BID
-		} else {
-			oside = ASK
-		}
-
 		ob.Add(&Order{
 			id:        rand.Uint64(),
 			otype:     LIMIT,
-			side:      oside,
+			side:      RandChoice(BID, ASK),
 			size:      rand.Int31n(10),
 			price:     f32(Truncate(rand.Float64(), 2)),
 			portfolio: &p,
