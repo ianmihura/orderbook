@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Printable interface {
 	Print()
@@ -21,42 +24,56 @@ func (orderbook *OrderBook) Print() {
 	}
 }
 func (orderbook *OrderBook) PPrint() {
-	// TODO max value dynamically
-	// TODO stack by price (aggregate):
-	// - make a hashmap that indexes, by quantiles (5-15 quantiles)
-	// print an index of vol in the bottom
-	var quantity i32
-	var depth string
-	var ask_print []Tuple
+	max := orderbook.queue_ask.Bottom().price
+	min := orderbook.queue_bid.Bottom().price
 
-	for i := orderbook.queue_ask.Len() - 1; i >= 0; i-- {
-		quantity += orderbook.queue_ask.v[i].size
-		for range quantity/1000 + 1 {
-			depth += "█"
-		}
-		ask_print = append(ask_print, Tuple{orderbook.queue_ask.v[i].price, depth, orderbook.queue_ask.v[i].portfolio.is_user})
-	}
-	for i := len(ask_print) - 1; i >= 0; i-- {
-		fmt.Printf("$%.2f %s", ask_print[i].a, ask_print[i].b)
-		if ask_print[i].c == true {
-			fmt.Print(" (U)")
-		}
-		fmt.Print("\n")
-	}
+	point_count := 30
+	point_size := (max - min) / f32(point_count)
 
+	pprintQueueAsk(orderbook.queue_ask, point_size, point_count)
 	fmt.Printf("\nMidprice:$%.2f, Spread:%.2f%%\n\n", orderbook.Midprice(), orderbook.Spread()*100)
-	depth = ""
-	quantity = 0
-	for i := orderbook.queue_bid.Len() - 1; i >= 0; i-- {
-		quantity += orderbook.queue_bid.v[i].size
-		for range quantity/1000 + 1 {
-			depth += "█"
+	pprintQueueBid(orderbook.queue_bid, point_size, point_count)
+}
+func pprintQueueAsk(queue Queue, point_size f32, point_count int) {
+	min := queue.Top().price
+	_print := make([]i32, point_count/2)
+	o := len(queue.v) - 1
+out:
+	for p := range point_count / 2 {
+		if p != 0 {
+			_print[p] = _print[p-1]
 		}
-		fmt.Printf("$%.2f %s", orderbook.queue_bid.v[i].price, depth)
-		if orderbook.queue_bid.v[i].portfolio.is_user {
-			fmt.Print(" (U)")
+		for queue.v[o].price < min+f32(p+1)*point_size {
+			_print[p] += queue.v[o].size
+			o--
+			if o < 0 {
+				break out
+			}
 		}
-		fmt.Print("\n")
+	}
+	for i := len(_print) - 1; i >= 0; i-- {
+		depth := strings.Repeat("█", int(_print[i]/2))
+		fmt.Printf("$%5.2f %s\n", min+f32(i)*point_size, depth)
+	}
+}
+func pprintQueueBid(queue Queue, point_size f32, point_count int) {
+	max := queue.Top().price
+	_print := make([]i32, point_count/2)
+	o := len(queue.v) - 1
+out:
+	for p := range point_count / 2 {
+		if p != 0 {
+			_print[p] = _print[p-1]
+		}
+		for queue.v[o].price > max-f32(p+1)*point_size {
+			_print[p] += queue.v[o].size
+			o--
+			if o < 0 {
+				break out
+			}
+		}
+		depth := strings.Repeat("█", int(_print[p]/2))
+		fmt.Printf("$%5.2f %s\n", max-f32(p)*point_size, depth)
 	}
 }
 

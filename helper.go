@@ -12,10 +12,6 @@ type f64 = float64
 type u64 = uint64
 type i32 = int32
 
-type Tuple struct {
-	a, b, c any
-}
-
 type BaseError struct {
 	message string
 	data    any
@@ -99,5 +95,23 @@ func Abs(f f32) f32 {
 		return -f
 	} else {
 		return f
+	}
+}
+
+// Maximum between two f32
+func Max(a, b f32) f32 {
+	if a > b {
+		return a
+	} else {
+		return b
+	}
+}
+
+// Minimum between two f32
+func Min(a, b f32) f32 {
+	if a > b {
+		return b
+	} else {
+		return a
 	}
 }

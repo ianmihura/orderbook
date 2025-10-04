@@ -48,9 +48,18 @@ func (q *Queue) IsEmpty() bool {
 /* Returns pointer to the head element */
 func (q *Queue) Top() *Order {
 	if q.IsEmpty() {
-		return nil
+		return &Order{}
 	} else {
 		return &q.v[len(q.v)-1]
+	}
+}
+
+/* Returns pointer to the tail element */
+func (q *Queue) Bottom() *Order {
+	if q.IsEmpty() {
+		return &Order{}
+	} else {
+		return &q.v[0]
 	}
 }
 

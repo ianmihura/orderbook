@@ -28,13 +28,13 @@ func BootOrderbook(n int, lock *sync.Mutex) *OrderBook {
 
 		/*
 			To get a rough shape of an ordrebook:
-			we assume we want something like inverse norm dist,
+			we assume we want something like "inverse norm dist",
 			revolving around least likely mean_ob=mid_price,
-			with a defined range of (2*std_ob,-2*std_ob).
+			with a defined range of (2*std,-2*std).
 			Therefore we get 2 dist, with mean = mean_ob±(2*std) =>
-			10±2 => 8 & 12 (with mean_ob=10, std_ob=1).
-			In each case we get half the dist (the half that's nearer
-			to the mean_ob)
+			10±2 => 8 & 12 (with mean_ob=10, std=1).
+			In each case we get half the dist
+			(the half that's nearer to the mean_ob)
 
 			The two dist:
 			- N(8,1) only the positive half (X>mean)
