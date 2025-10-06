@@ -54,7 +54,6 @@ func main() {
 			_ob.lock.Lock()
 			orderbook = *_ob
 			_ob.lock.Unlock()
-			// no need to unlock because the lock gets defined again
 			// TODO reset history of tx
 		case "quit", "q":
 			os.Exit(0)

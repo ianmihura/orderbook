@@ -30,16 +30,18 @@ func (orderbook *OrderBook) PPrint() {
 	point_count := 30
 	point_size := (max - min) / f32(point_count)
 
-	pprintQueueAsk(orderbook.queue_ask, point_size, point_count)
+	pprintQueueAsk(orderbook.queue_ask, point_size, point_count/2)
 	fmt.Printf("\nMidprice:$%.2f, Spread:%.2f%%\n\n", orderbook.Midprice(), orderbook.Spread()*100)
-	pprintQueueBid(orderbook.queue_bid, point_size, point_count)
+	pprintQueueBid(orderbook.queue_bid, point_size, point_count/2)
+	fmt.Println("            10   20   30   40   50   60   70   80   90   100")
+	//                  ^2468^2468^2468^2468^2468^2468^2468^2468^2468^2468^
 }
-func pprintQueueAsk(queue Queue, point_size f32, point_count int) {
+func pprintQueueAsk(queue Queue, point_size f32, h_point_count int) {
 	min := queue.Top().price
-	_print := make([]i32, point_count/2)
+	_print := make([]i32, h_point_count)
 	o := len(queue.v) - 1
 out:
-	for p := range point_count / 2 {
+	for p := range h_point_count {
 		if p != 0 {
 			_print[p] = _print[p-1]
 		}
@@ -56,12 +58,12 @@ out:
 		fmt.Printf("$%5.2f %s\n", min+f32(i)*point_size, depth)
 	}
 }
-func pprintQueueBid(queue Queue, point_size f32, point_count int) {
+func pprintQueueBid(queue Queue, point_size f32, h_point_count int) {
 	max := queue.Top().price
-	_print := make([]i32, point_count/2)
+	_print := make([]i32, h_point_count)
 	o := len(queue.v) - 1
 out:
-	for p := range point_count / 2 {
+	for p := range h_point_count {
 		if p != 0 {
 			_print[p] = _print[p-1]
 		}
