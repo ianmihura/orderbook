@@ -61,6 +61,8 @@ func BootOrderbook(n int, lock *sync.Mutex) *OrderBook {
 	return &orderbook
 }
 
+// TODO design patterns: addTrader abstract
+
 // Market Maker adds a limit order near the midprice.
 // Executes every second, if the spread is >0.1%
 func addMM(orderbook *OrderBook, portfolio *Portfolio) {
@@ -138,6 +140,7 @@ func AddAutoTraders(orderbook *OrderBook) *[]*Portfolio {
 	autos := []*Portfolio{}
 	// Adds 2 market makers
 	for range 2 {
+		// TODO market makers usually want to tend to 0 asset exposition
 		portfolio := Portfolio{asset: 100_000, cash: 1_000_000}
 		go addMM(orderbook, &portfolio)
 		autos = append(autos, &portfolio)

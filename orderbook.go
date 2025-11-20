@@ -25,6 +25,7 @@ type FillReport struct {
 // Returns a FillReport. Will panic if unknown OrderType
 func (orderbook *OrderBook) Add(order *Order) *FillReport {
 	// TODO: Will execute Fill function in the Order _
+	// TODO refactor this to a strategy pattern
 	switch order.otype {
 	case MARKET:
 		return addToMarket(orderbook, order)
@@ -37,7 +38,6 @@ func (orderbook *OrderBook) Add(order *Order) *FillReport {
 	case VWAP:
 		return addVWAP(orderbook, order)
 	default:
-		// TODO more order types coming
 		panic("Unknown OrderType")
 	}
 }
@@ -156,6 +156,7 @@ func addMidprice(orderbook *OrderBook, order *Order) *FillReport {
 // Spaced out, every few random seconds [0,3).
 // Price will always be the Average executed price.
 func addTWAP(orderbook *OrderBook, order *Order) *FillReport {
+	// TODO finish this thing
 	fill_report := FillReport{}
 	for order.size >= 0 {
 		avgSize := GetAvgSize()

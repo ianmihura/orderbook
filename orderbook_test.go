@@ -84,14 +84,6 @@ func TestAddLimit(t *testing.T) {
 	Assert(t, IsSortedFuncDesc(ob.queue_bid.v, func(a, b Order) int {
 		return cmp.Compare(b.price, a.price)
 	}), "BID queue Should be sorted by price")
-
-	// TODO not implemented
-	// Assert(t, slices.IsSortedFunc(ob.queue_ask, func(a, b Order) int {
-	// 	return a.created.Compare(b.created)
-	// }), "ASK queue Should be sorted by created datetime")
-	// Assert(t, slices.IsSortedFunc(ob.queue_bid, func(a, b Order) int {
-	// 	return a.created.Compare(b.created)
-	// }), "BID queue Should be sorted by created datetime")
 }
 
 func TestAddAutofillLimit(t *testing.T) {

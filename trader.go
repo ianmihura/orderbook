@@ -8,6 +8,7 @@ import (
 
 func main() {
 	orderbook := OrderBook{}
+	// TODO make better lock logic: we spend too much time being locked, maybe only need to lock in queue.go? (edit the actual thing)
 	lock := &sync.Mutex{}
 	orderbook = *BootOrderbook(40, lock)
 
